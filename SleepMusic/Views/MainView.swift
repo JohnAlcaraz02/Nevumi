@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainView: View {
     @StateObject private var viewModel = PlayerViewModel()
+    @StateObject private var spotify = SpotifyObserver()
 
     var body: some View {
         ZStack {
@@ -9,21 +10,76 @@ struct MainView: View {
 
             VStack(spacing: 28) {
                 header
-                trackCard
 
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red.opacity(0.85))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
+                if let nowPlaying = spotify.nowPlaying {
+                    spotifyBanner(nowPlaying)
                 }
+
+                lyricsCard
+
+                sleepModeButton
 
                 Spacer(minLength: 0)
             }
             .padding(28)
         }
         .frame(minWidth: 420, minHeight: 480)
+        .onAppear {
+            SleepOverlayController.shared.observeLockEvents(
+                lyrics: viewModel.lyrics,
+                isPlaying: { spotify.nowPlaying?.isPlaying ?? false },
+                trackTitle: { spotify.nowPlaying?.title ?? "" }
+            )
+            spotify.start()
+            viewModel.lyrics.attachToSpotify(spotify)
+        }
+        .onDisappear {
+            spotify.stop()
+        }
+        .onChange(of: spotify.nowPlaying) { nowPlaying in
+            viewModel.lyrics.syncWithSpotify(nowPlaying)
+        }
+    }
+
+    private func spotifyBanner(_ nowPlaying: SpotifyObserver.NowPlaying) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: nowPlaying.isPlaying ? "waveform" : "pause.fill")
+                .foregroundStyle(.green)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(nowPlaying.title)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                Text(nowPlaying.artist)
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Text("Spotify")
+                .font(.caption2)
+                .foregroundStyle(.white.opacity(0.4))
+        }
+        .padding(12)
+        .background(.white.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private var sleepModeButton: some View {
+        Button {
+            SleepOverlayController.shared.show(trackTitle: spotify.nowPlaying?.title ?? "", lyrics: viewModel.lyrics)
+        } label: {
+            Label("Enter Sleep Mode", systemImage: "moon.stars.fill")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+        .tint(.white)
+        .controlSize(.large)
+        .disabled(spotify.nowPlaying == nil)
     }
 
     private var background: some View {
@@ -50,67 +106,36 @@ struct MainView: View {
         .padding(.top, 12)
     }
 
-    private var trackCard: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 12) {
-                Image(systemName: viewModel.channel.track?.category.symbol ?? "music.note")
-                    .font(.title2)
+    @ViewBuilder
+    private var lyricsCard: some View {
+        VStack(spacing: 12) {
+            if viewModel.lyrics.isLoading {
+                ProgressView()
+                    .tint(.white)
+            } else if let line = viewModel.lyrics.currentLine {
+                Text(line.text)
+                    .font(.system(size: 18, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
-                    .frame(width: 32)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.channel.track?.name ?? "No track loaded")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Text(statusText)
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.5))
-                }
-
-                Spacer()
+                    .multilineTextAlignment(.center)
+                    .id(line.id)
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.3), value: line.id)
+            } else if viewModel.lyrics.lookupFailed {
+                Text("No synced lyrics found for this track.")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.4))
+            } else if spotify.nowPlaying != nil {
+                Text("🌙")
+                    .font(.system(size: 32))
+                    .opacity(0.5)
+            } else {
+                Text("Play something in Spotify to see lyrics here.")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.4))
+                    .multilineTextAlignment(.center)
             }
-
-            HStack(spacing: 16) {
-                Button(action: viewModel.togglePlayPause) {
-                    Image(systemName: viewModel.channel.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                        .font(.system(size: 42))
-                        .foregroundStyle(.white)
-                }
-                .buttonStyle(.plain)
-                .disabled(viewModel.channel.track == nil)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Volume")
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.5))
-                        Spacer()
-                        Text("\(Int(viewModel.channel.volume * 100))%")
-                            .font(.caption2)
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                    Slider(
-                        value: Binding(
-                            get: { Double(viewModel.channel.volume) },
-                            set: { viewModel.setVolume(Float($0)) }
-                        ),
-                        in: 0...1
-                    )
-                    .tint(.indigo)
-                }
-            }
-
-            Button {
-                viewModel.importAndLoad(category: .music)
-            } label: {
-                Label("Import Audio File", systemImage: "folder.badge.plus")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(.indigo)
-            .controlSize(.large)
         }
+        .frame(maxWidth: .infinity, minHeight: 140)
         .padding(20)
         .background(.white.opacity(0.06))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -118,11 +143,6 @@ struct MainView: View {
             RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(.white.opacity(0.08), lineWidth: 1)
         )
-    }
-
-    private var statusText: String {
-        guard viewModel.channel.track != nil else { return "Import a file to begin" }
-        return viewModel.channel.isPlaying ? "Playing" : "Paused"
     }
 }
 

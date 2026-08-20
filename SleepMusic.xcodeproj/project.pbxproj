@@ -7,13 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		22DCC238BD544F2C4DC49716 /* LyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */; };
 		25CA0C90D844A5C3B712F6E3 /* AudioLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509F1B613056715C96EF51EE /* AudioLibraryService.swift */; };
 		524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */; };
+		55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */; };
+		5B7B4191AA25C41D669C17D8 /* SleepOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */; };
+		737F9DCF360F84C8E27EC023 /* SpotifyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */; };
 		9677D9F928D32989565C83EA /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */; };
 		9D9FC6028C04F83706ADD811 /* SleepMusicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */; };
 		A7DD5B89282180349C403253 /* AudioCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0773BE56ED4A97032993C40D /* AudioCategory.swift */; };
+		AC1E6AFB7E07FC2242466FA8 /* SleepOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */; };
 		CE1CA8AC2716BBBCF73D786D /* AudioTrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123834E3C59029C62E996E2B /* AudioTrack.swift */; };
+		EF3ED4B3372F5E9073B7B280 /* LyricsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */; };
 		F0AFEB6EEC5F340BE29763EF /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */; };
+		F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */; };
 		FCCFC2A6E005610E993F5D89 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEA7D398800A232D727D2EE4 /* MainView.swift */; };
 /* End PBXBuildFile section */
 
@@ -21,12 +28,19 @@
 		0773BE56ED4A97032993C40D /* AudioCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCategory.swift; sourceTree = "<group>"; };
 		0F630F146DDAA6790D947A22 /* SleepMusic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SleepMusic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		123834E3C59029C62E996E2B /* AudioTrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioTrack.swift; sourceTree = "<group>"; };
+		2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingService.swift; sourceTree = "<group>"; };
+		3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsService.swift; sourceTree = "<group>"; };
 		4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
+		4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyObserver.swift; sourceTree = "<group>"; };
+		4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricLine.swift; sourceTree = "<group>"; };
 		509F1B613056715C96EF51EE /* AudioLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioLibraryService.swift; sourceTree = "<group>"; };
 		6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepMusicApp.swift; sourceTree = "<group>"; };
 		7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		AEA7D398800A232D727D2EE4 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayController.swift; sourceTree = "<group>"; };
+		BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsViewModel.swift; sourceTree = "<group>"; };
+		FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -55,6 +69,7 @@
 			children = (
 				0773BE56ED4A97032993C40D /* AudioCategory.swift */,
 				123834E3C59029C62E996E2B /* AudioTrack.swift */,
+				4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -62,6 +77,7 @@
 		A16544B46DD13B064DF4CC13 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */,
 				6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */,
 			);
 			path = ViewModels;
@@ -88,6 +104,10 @@
 			children = (
 				4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */,
 				509F1B613056715C96EF51EE /* AudioLibraryService.swift */,
+				3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */,
+				2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */,
+				BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */,
+				4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */,
 				7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */,
 			);
 			path = Services;
@@ -97,11 +117,12 @@
 			isa = PBXGroup;
 			children = (
 				AEA7D398800A232D727D2EE4 /* MainView.swift */,
+				FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_511F3700-A1D2-42AE-A0D5-DF2417BDFC1C" /* Resources */ = {
+		"TEMP_25072005-4526-44E5-B226-733C6B39DA86" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -170,9 +191,16 @@
 				9677D9F928D32989565C83EA /* AudioEngine.swift in Sources */,
 				25CA0C90D844A5C3B712F6E3 /* AudioLibraryService.swift in Sources */,
 				CE1CA8AC2716BBBCF73D786D /* AudioTrack.swift in Sources */,
+				55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */,
+				22DCC238BD544F2C4DC49716 /* LyricsService.swift in Sources */,
+				EF3ED4B3372F5E9073B7B280 /* LyricsViewModel.swift in Sources */,
 				FCCFC2A6E005610E993F5D89 /* MainView.swift in Sources */,
+				F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */,
 				524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */,
 				9D9FC6028C04F83706ADD811 /* SleepMusicApp.swift in Sources */,
+				AC1E6AFB7E07FC2242466FA8 /* SleepOverlayController.swift in Sources */,
+				5B7B4191AA25C41D669C17D8 /* SleepOverlayView.swift in Sources */,
+				737F9DCF360F84C8E27EC023 /* SpotifyObserver.swift in Sources */,
 				F0AFEB6EEC5F340BE29763EF /* StorageService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

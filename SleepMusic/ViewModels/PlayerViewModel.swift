@@ -6,11 +6,17 @@ final class PlayerViewModel: ObservableObject {
     @Published var channel: SoundChannel
     @Published var errorMessage: String?
 
+    let lyrics = LyricsViewModel()
+
     private let engine = AudioEngine.shared
     private let library = AudioLibraryService.shared
 
     init() {
         channel = engine.makeChannel()
+        lyrics.attach(to: channel)
+        NowPlayingService.shared.configure { [weak self] in
+            self?.togglePlayPause()
+        }
     }
 
     func importAndLoad(category: AudioCategory) {
@@ -24,6 +30,8 @@ final class PlayerViewModel: ObservableObject {
         do {
             try engine.load(track: track, into: channel)
             errorMessage = nil
+            lyrics.fetchLyrics(title: track.name, durationHint: channel.duration)
+            NowPlayingService.shared.update(for: channel)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -36,6 +44,7 @@ final class PlayerViewModel: ObservableObject {
         } else {
             engine.play(channel)
         }
+        NowPlayingService.shared.update(for: channel)
     }
 
     func setVolume(_ value: Float) {

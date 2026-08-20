@@ -36,6 +36,23 @@ final class SoundChannel: ObservableObject, Identifiable {
         self.id = id
         playerNode.volume = volume
     }
+
+    /// Total length of the loaded file, in seconds. Used to disambiguate
+    /// lyrics search results that share a title but not a duration.
+    var duration: TimeInterval {
+        guard let audioFile else { return 0 }
+        return Double(audioFile.length) / audioFile.fileFormat.sampleRate
+    }
+
+    /// Elapsed playback time, in seconds, derived from the player node's
+    /// own render clock. Reads 0 when nothing is playing.
+    var currentTime: TimeInterval {
+        guard playerNode.isPlaying,
+              let nodeTime = playerNode.lastRenderTime,
+              let playerTime = playerNode.playerTime(forNodeTime: nodeTime)
+        else { return 0 }
+        return Double(playerTime.sampleTime) / playerTime.sampleRate
+    }
 }
 
 /// Central AVAudioEngine wrapper. All sound channels attach to the same
