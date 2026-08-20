@@ -1,0 +1,29 @@
+name: SleepMusic
+options:
+  bundleIdPrefix: com.johnalcaraz
+targets:
+  SleepMusic:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - path: SleepMusic
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.johnalcaraz.SleepMusic
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "5.0"
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: Generated/Info.plist
+      properties:
+        CFBundleDisplayName: Sleep Music
+        NSHumanReadableCopyright: "Personal use only"
+    entitlements:
+      path: Generated/SleepMusic.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.files.user-selected.read-only: true
+        com.apple.security.files.bookmarks.app-scope: true
