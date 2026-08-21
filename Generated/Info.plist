@@ -20,6 +20,8 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>LSUIElement</key>
+	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Sleep Music reads the currently playing track from Spotify to show it as Now Playing.</string>
 	<key>NSHumanReadableCopyright</key>

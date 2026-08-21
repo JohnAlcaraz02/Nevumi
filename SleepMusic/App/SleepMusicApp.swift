@@ -2,12 +2,15 @@ import SwiftUI
 
 @main
 struct SleepMusicApp: App {
+    @StateObject private var coordinator = AppCoordinator()
+    @StateObject private var loginItem = LoginItemManager()
+
     var body: some Scene {
-        WindowGroup {
-            MainView()
+        MenuBarExtra {
+            MenuBarContentView(coordinator: coordinator, loginItem: loginItem)
+        } label: {
+            Image(systemName: "moon.stars.fill")
         }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
-        .defaultSize(width: 460, height: 520)
+        .menuBarExtraStyle(.menu)
     }
 }

@@ -9,39 +9,63 @@
 /* Begin PBXBuildFile section */
 		22DCC238BD544F2C4DC49716 /* LyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */; };
 		25CA0C90D844A5C3B712F6E3 /* AudioLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509F1B613056715C96EF51EE /* AudioLibraryService.swift */; };
+		3C5E15E06B3AFF7FE795C124 /* AmbientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29EE891A7BAFF57CA2FFC62F /* AmbientBackground.swift */; };
 		524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */; };
+		54E04644580B951A75E9F470 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A762CF8B0012B9587B76DDB /* DynamicNotchKit */; };
 		55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */; };
 		5B7B4191AA25C41D669C17D8 /* SleepOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */; };
 		737F9DCF360F84C8E27EC023 /* SpotifyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */; };
+		8FEFAA2B0737FCD6966A3463 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */; };
+		90142DDDA87C569279B0A10F /* ArtworkPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C1126AF67089FD167627A33 /* ArtworkPalette.swift */; };
 		9677D9F928D32989565C83EA /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */; };
 		9D9FC6028C04F83706ADD811 /* SleepMusicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */; };
 		A7DD5B89282180349C403253 /* AudioCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0773BE56ED4A97032993C40D /* AudioCategory.swift */; };
 		AC1E6AFB7E07FC2242466FA8 /* SleepOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */; };
+		B201BBA47E18E24E69637FED /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */; };
+		B372E44D91722FDAD6FFB711 /* NotchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E143833A08369E3FBAC8B3FC /* NotchController.swift */; };
 		CE1CA8AC2716BBBCF73D786D /* AudioTrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123834E3C59029C62E996E2B /* AudioTrack.swift */; };
+		D75B294F1FDCDC339F0FB404 /* EqualizerIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = D422093973C9CB9A3F614406 /* EqualizerIcon.swift */; };
+		DF89D33D12BEB8472E58C3B5 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65494129A00A595E06CD1C2E /* AppCoordinator.swift */; };
 		EF3ED4B3372F5E9073B7B280 /* LyricsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */; };
 		F0AFEB6EEC5F340BE29763EF /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */; };
 		F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */; };
-		FCCFC2A6E005610E993F5D89 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEA7D398800A232D727D2EE4 /* MainView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0773BE56ED4A97032993C40D /* AudioCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCategory.swift; sourceTree = "<group>"; };
 		0F630F146DDAA6790D947A22 /* SleepMusic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SleepMusic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		123834E3C59029C62E996E2B /* AudioTrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioTrack.swift; sourceTree = "<group>"; };
+		19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemManager.swift; sourceTree = "<group>"; };
 		2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingService.swift; sourceTree = "<group>"; };
+		29EE891A7BAFF57CA2FFC62F /* AmbientBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientBackground.swift; sourceTree = "<group>"; };
 		3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsService.swift; sourceTree = "<group>"; };
 		4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyObserver.swift; sourceTree = "<group>"; };
 		4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricLine.swift; sourceTree = "<group>"; };
 		509F1B613056715C96EF51EE /* AudioLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioLibraryService.swift; sourceTree = "<group>"; };
+		65494129A00A595E06CD1C2E /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 		6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepMusicApp.swift; sourceTree = "<group>"; };
+		7C1126AF67089FD167627A33 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
-		AEA7D398800A232D727D2EE4 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayController.swift; sourceTree = "<group>"; };
 		BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsViewModel.swift; sourceTree = "<group>"; };
+		D422093973C9CB9A3F614406 /* EqualizerIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerIcon.swift; sourceTree = "<group>"; };
+		E143833A08369E3FBAC8B3FC /* NotchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchController.swift; sourceTree = "<group>"; };
 		FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		84712B2F8CB3B4B0A34F435F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				54E04644580B951A75E9F470 /* DynamicNotchKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		38CFD23C0FFB7856B1AF3B88 /* Products */ = {
@@ -94,6 +118,7 @@
 		DCB59C5355ED2E4135F67765 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				65494129A00A595E06CD1C2E /* AppCoordinator.swift */,
 				73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */,
 			);
 			path = App;
@@ -102,9 +127,12 @@
 		F46508872FDF7211FF2AE49C /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				7C1126AF67089FD167627A33 /* ArtworkPalette.swift */,
 				4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */,
 				509F1B613056715C96EF51EE /* AudioLibraryService.swift */,
+				19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */,
 				3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */,
+				E143833A08369E3FBAC8B3FC /* NotchController.swift */,
 				2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */,
 				BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */,
 				4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */,
@@ -116,13 +144,15 @@
 		FEAE3F2AEF628F8814DA7101 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				AEA7D398800A232D727D2EE4 /* MainView.swift */,
+				29EE891A7BAFF57CA2FFC62F /* AmbientBackground.swift */,
+				D422093973C9CB9A3F614406 /* EqualizerIcon.swift */,
+				A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */,
 				FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_25072005-4526-44E5-B226-733C6B39DA86" /* Resources */ = {
+		"TEMP_008BBE5D-F2D7-4A46-AA81-83DEA092A88F" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -137,6 +167,7 @@
 			buildConfigurationList = 61A7E177455E1D58B7DA5F24 /* Build configuration list for PBXNativeTarget "SleepMusic" */;
 			buildPhases = (
 				ADC6F195707DF72058F489FA /* Sources */,
+				84712B2F8CB3B4B0A34F435F /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -144,6 +175,7 @@
 			);
 			name = SleepMusic;
 			packageProductDependencies = (
+				7A762CF8B0012B9587B76DDB /* DynamicNotchKit */,
 			);
 			productName = SleepMusic;
 			productReference = 0F630F146DDAA6790D947A22 /* SleepMusic.app */;
@@ -172,6 +204,9 @@
 			);
 			mainGroup = D9C0E26763CFFEA14E559FDE;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				556E7BE653000DB6F2A9CBF3 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 38CFD23C0FFB7856B1AF3B88 /* Products */;
 			projectDirPath = "";
@@ -187,14 +222,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C5E15E06B3AFF7FE795C124 /* AmbientBackground.swift in Sources */,
+				DF89D33D12BEB8472E58C3B5 /* AppCoordinator.swift in Sources */,
+				90142DDDA87C569279B0A10F /* ArtworkPalette.swift in Sources */,
 				A7DD5B89282180349C403253 /* AudioCategory.swift in Sources */,
 				9677D9F928D32989565C83EA /* AudioEngine.swift in Sources */,
 				25CA0C90D844A5C3B712F6E3 /* AudioLibraryService.swift in Sources */,
 				CE1CA8AC2716BBBCF73D786D /* AudioTrack.swift in Sources */,
+				D75B294F1FDCDC339F0FB404 /* EqualizerIcon.swift in Sources */,
+				B201BBA47E18E24E69637FED /* LoginItemManager.swift in Sources */,
 				55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */,
 				22DCC238BD544F2C4DC49716 /* LyricsService.swift in Sources */,
 				EF3ED4B3372F5E9073B7B280 /* LyricsViewModel.swift in Sources */,
-				FCCFC2A6E005610E993F5D89 /* MainView.swift in Sources */,
+				8FEFAA2B0737FCD6966A3463 /* MenuBarContentView.swift in Sources */,
+				B372E44D91722FDAD6FFB711 /* NotchController.swift in Sources */,
 				F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */,
 				524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */,
 				9D9FC6028C04F83706ADD811 /* SleepMusicApp.swift in Sources */,
@@ -277,7 +318,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnalcaraz.SleepMusic;
 				SDKROOT = macosx;
@@ -299,7 +340,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnalcaraz.SleepMusic;
 				SDKROOT = macosx;
@@ -391,6 +432,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		556E7BE653000DB6F2A9CBF3 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MrKai77/DynamicNotchKit";
+			requirement = {
+				kind = exactVersion;
+				version = 1.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7A762CF8B0012B9587B76DDB /* DynamicNotchKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 556E7BE653000DB6F2A9CBF3 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */;
+			productName = DynamicNotchKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B3E92E008E3D052C5179C62B /* Project object */;
 }

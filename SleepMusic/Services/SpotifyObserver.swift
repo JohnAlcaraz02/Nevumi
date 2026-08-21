@@ -10,6 +10,7 @@ final class SpotifyObserver: ObservableObject {
         var artist: String
         var isPlaying: Bool
         var duration: TimeInterval
+        var artworkURL: URL?
     }
 
     @Published private(set) var nowPlaying: NowPlaying?
@@ -22,12 +23,33 @@ final class SpotifyObserver: ObservableObject {
         "if application \"Spotify\" is running then",
         "    tell application \"Spotify\"",
         "        set trackDuration to (duration of current track) / 1000",
-        "        return (name of current track) & \"||\" & (artist of current track) & \"||\" & (player state as string) & \"||\" & (player position as string) & \"||\" & (trackDuration as string)",
+        "        return (name of current track) & \"||\" & (artist of current track) & \"||\" & (player state as string) & \"||\" & (player position as string) & \"||\" & (trackDuration as string) & \"||\" & (artwork url of current track)",
         "    end tell",
         "else",
         "    return \"NOT_RUNNING\"",
         "end if",
     ].joined(separator: "\n"))
+
+    /// Toggles play/pause in Spotify. Fire-and-forget, like the polling script.
+    func togglePlayPause() {
+        NSAppleScript(source: "tell application \"Spotify\" to playpause")?.executeAndReturnError(nil)
+    }
+
+    func skipToNext() {
+        NSAppleScript(source: "tell application \"Spotify\" to next track")?.executeAndReturnError(nil)
+    }
+
+    func skipToPrevious() {
+        NSAppleScript(source: "tell application \"Spotify\" to previous track")?.executeAndReturnError(nil)
+    }
+
+    func toggleShuffle() {
+        NSAppleScript(source: "tell application \"Spotify\" to set shuffling to not shuffling")?.executeAndReturnError(nil)
+    }
+
+    func toggleRepeat() {
+        NSAppleScript(source: "tell application \"Spotify\" to set repeating to not repeating")?.executeAndReturnError(nil)
+    }
 
     func start() {
         guard timer == nil else { return }
@@ -65,7 +87,7 @@ final class SpotifyObserver: ObservableObject {
         let output = script.executeAndReturnError(&errorDict)
         guard errorDict == nil, let raw = output.stringValue, raw != "NOT_RUNNING" else { return nil }
         let parts = raw.components(separatedBy: "||")
-        guard parts.count == 5,
+        guard parts.count == 6,
               let position = Double(parts[3]),
               let duration = Double(parts[4])
         else { return nil }
@@ -73,7 +95,8 @@ final class SpotifyObserver: ObservableObject {
             title: parts[0],
             artist: parts[1],
             isPlaying: parts[2] == "playing",
-            duration: duration
+            duration: duration,
+            artworkURL: URL(string: parts[5])
         )
         return (nowPlaying, position)
     }

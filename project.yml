@@ -1,13 +1,19 @@
 name: SleepMusic
 options:
   bundleIdPrefix: com.johnalcaraz
+packages:
+  DynamicNotchKit:
+    url: https://github.com/MrKai77/DynamicNotchKit
+    exactVersion: 1.1.0
 targets:
   SleepMusic:
     type: application
     platform: macOS
-    deploymentTarget: "13.0"
+    deploymentTarget: "26.0"
     sources:
       - path: SleepMusic
+    dependencies:
+      - package: DynamicNotchKit
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.johnalcaraz.SleepMusic
@@ -22,6 +28,7 @@ targets:
         CFBundleDisplayName: Sleep Music
         NSHumanReadableCopyright: "Personal use only"
         NSAppleEventsUsageDescription: "Sleep Music reads the currently playing track from Spotify to show it as Now Playing."
+        LSUIElement: true
     entitlements:
       path: Generated/SleepMusic.entitlements
       properties:

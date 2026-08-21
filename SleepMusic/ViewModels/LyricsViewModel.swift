@@ -39,7 +39,7 @@ final class LyricsViewModel: ObservableObject {
         }
     }
 
-    func fetchLyrics(title: String, durationHint: TimeInterval?) {
+    func fetchLyrics(title: String, artist: String? = nil, durationHint: TimeInterval?) {
         lines = []
         currentLine = nil
         lookupFailed = false
@@ -47,7 +47,7 @@ final class LyricsViewModel: ObservableObject {
 
         Task {
             do {
-                lines = try await service.fetchSyncedLyrics(forQuery: title, durationHint: durationHint)
+                lines = try await service.fetchSyncedLyrics(title: title, artist: artist, durationHint: durationHint)
             } catch {
                 lookupFailed = true
             }
@@ -67,7 +67,7 @@ final class LyricsViewModel: ObservableObject {
         let key = "\(nowPlaying.title)|\(nowPlaying.artist)"
         guard key != lastSpotifyKey else { return }
         lastSpotifyKey = key
-        fetchLyrics(title: nowPlaying.title, durationHint: nowPlaying.duration)
+        fetchLyrics(title: nowPlaying.title, artist: nowPlaying.artist, durationHint: nowPlaying.duration)
     }
 
     private func tick() {

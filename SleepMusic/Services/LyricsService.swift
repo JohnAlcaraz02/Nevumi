@@ -16,15 +16,29 @@ enum LyricsServiceError: LocalizedError {
 
 /// Looks up time-synced lyrics on LRCLIB (lrclib.net) — a free, open,
 /// unauthenticated lyrics database. No API key, no account, no tracking:
-/// just a GET request keyed by track name, matched by closest duration.
+/// just a GET request keyed by track (and, when known, artist) name,
+/// matched by closest duration.
 struct LyricsService {
     static let shared = LyricsService()
 
     private let session = URLSession.shared
 
-    func fetchSyncedLyrics(forQuery query: String, durationHint: TimeInterval?) async throws -> [LyricLine] {
+    /// Searches by title alone when `artist` is nil/empty (e.g. a locally
+    /// imported file with no metadata). A generic title like "Closer"
+    /// returns 20 results dominated by obscure tracks with that same name —
+    /// the real hit can be pushed out of the result set entirely. Passing
+    /// `artist` uses LRCLIB's dedicated `track_name`/`artist_name` filters
+    /// instead of the free-text `q` search, which finds the right track.
+    func fetchSyncedLyrics(title: String, artist: String? = nil, durationHint: TimeInterval?) async throws -> [LyricLine] {
         var components = URLComponents(string: "https://lrclib.net/api/search")!
-        components.queryItems = [URLQueryItem(name: "q", value: query)]
+        if let artist, !artist.isEmpty {
+            components.queryItems = [
+                URLQueryItem(name: "track_name", value: title),
+                URLQueryItem(name: "artist_name", value: artist)
+            ]
+        } else {
+            components.queryItems = [URLQueryItem(name: "q", value: title)]
+        }
 
         let (data, _) = try await session.data(from: components.url!)
         let results = try JSONDecoder().decode([LRCLIBResult].self, from: data)
