@@ -1,30 +1,56 @@
 import AppKit
+import Combine
+import SkyLightWindow
 import SwiftUI
 
 /// Presents a fullscreen, borderless window showing the current lyric line —
 /// the "screen while the Mac sleeps" surface.
 ///
 /// This is our own top-level window at screen-saver window level, not an
-/// injection into the real system lock screen (that surface is rendered by
-/// loginwindow, a secure system process no ordinary app can draw above —
-/// by design, so nothing can fake a password prompt). It shows on top of
-/// the desktop when Sleep Mode is entered manually, or automatically while
-/// a track is playing and the screen locks (works immediately if this Mac
-/// doesn't require a password) or right after a real password-protected
-/// unlock (a "welcome back" moment, since we can't cover the password
-/// prompt itself). It closes on any key press or click.
+/// injection into the secure password UI rendered by loginwindow. In manual
+/// Sleep Mode it is interactive and closes on a key press or click. While
+/// the Mac is locked it becomes a click-through, non-key window that remains
+/// eligible for display without a logged-in desktop and temporarily prevents
+/// idle display/system sleep while Spotify is playing.
 @MainActor
 final class SleepOverlayController: NSObject {
     static let shared = SleepOverlayController()
 
+    private enum PresentationMode {
+        case manual
+        case lockScreen
+    }
+
     private var window: NSWindow?
     private var eventMonitor: Any?
+    private var lockScreenActivity: NSObjectProtocol?
+    private var playbackCancellable: AnyCancellable?
+    private var isDelegatedToLockScreen = false
+    private var isScreenLocked = false
     private var lockObserver: NSObjectProtocol?
     private var unlockObserver: NSObjectProtocol?
     private var sleepObserver: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
 
     func show(spotify: SpotifyObserver, lyrics: LyricsViewModel) {
+        present(spotify: spotify, lyrics: lyrics, mode: .manual)
+    }
+
+    private func present(
+        spotify: SpotifyObserver,
+        lyrics: LyricsViewModel,
+        mode: PresentationMode
+    ) {
+        if let window {
+            if mode == .manual, isDelegatedToLockScreen {
+                hide()
+                present(spotify: spotify, lyrics: lyrics, mode: mode)
+                return
+            }
+            configure(window: window, for: mode)
+            return
+        }
+
         guard window == nil, let screen = NSScreen.main else { return }
 
         let panel = NSWindow(
@@ -37,17 +63,42 @@ final class SleepOverlayController: NSObject {
         panel.isOpaque = true
         panel.backgroundColor = .black
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        panel.canBecomeVisibleWithoutLogin = mode == .lockScreen
         panel.contentView = NSHostingView(
             rootView: SleepOverlayView(spotify: spotify, lyrics: lyrics, onDismiss: { [weak self] in self?.hide() })
         )
-        panel.makeKeyAndOrderFront(nil)
-        NSCursor.setHiddenUntilMouseMoves(true)
         window = panel
-        NotchController.shared.bringToFront()
+        configure(window: panel, for: mode)
+    }
 
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { [weak self] event in
-            self?.hide()
-            return event
+    private func configure(window: NSWindow, for mode: PresentationMode) {
+        if let eventMonitor {
+            NSEvent.removeMonitor(eventMonitor)
+            self.eventMonitor = nil
+        }
+
+        switch mode {
+        case .manual:
+            endLockScreenActivity()
+            window.canBecomeVisibleWithoutLogin = false
+            window.ignoresMouseEvents = false
+            window.makeKeyAndOrderFront(nil)
+            NSCursor.setHiddenUntilMouseMoves(true)
+            NotchController.shared.bringToFront()
+
+            eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { [weak self] event in
+                self?.hide()
+                return event
+            }
+        case .lockScreen:
+            beginLockScreenActivity()
+            window.canBecomeVisibleWithoutLogin = true
+            window.ignoresMouseEvents = true
+            if !isDelegatedToLockScreen {
+                SkyLightOperator.shared.delegateWindow(window)
+                isDelegatedToLockScreen = true
+            }
+            window.orderFrontRegardless()
         }
     }
 
@@ -56,17 +107,31 @@ final class SleepOverlayController: NSObject {
         eventMonitor = nil
         window?.orderOut(nil)
         window = nil
+        isDelegatedToLockScreen = false
+        endLockScreenActivity()
     }
 
-    /// Auto-shows the overlay while a track is playing: immediately when the
-    /// screen locks or the Mac sleeps (best-effort — only actually visible
-    /// if this Mac doesn't require a password to wake), and again, freshly,
-    /// right after a real unlock — since a password-protected wake can't be
-    /// covered, this is the moment we *can* still greet the user. Call once
-    /// at app launch.
+    /// Auto-shows a click-through overlay while the screen is locked and a
+    /// track is playing. The accompanying power activity prevents idle sleep,
+    /// but forced sleep (lid close, Apple menu, or low battery) is respected.
+    /// Call once at app launch.
     func observeLockEvents(spotify: SpotifyObserver, lyrics: LyricsViewModel, isPlaying: @escaping () -> Bool) {
         let distributedCenter = DistributedNotificationCenter.default()
         let workspaceCenter = NSWorkspace.shared.notificationCenter
+
+        playbackCancellable = spotify.$nowPlaying
+            .map { $0?.isPlaying == true }
+            .removeDuplicates()
+            .sink { [weak self] isPlaying in
+                Task { @MainActor in
+                    guard let self, self.isScreenLocked else { return }
+                    if isPlaying {
+                        self.present(spotify: spotify, lyrics: lyrics, mode: .lockScreen)
+                    } else {
+                        self.hide()
+                    }
+                }
+            }
 
         lockObserver = distributedCenter.addObserver(
             forName: Notification.Name("com.apple.screenIsLocked"),
@@ -74,8 +139,9 @@ final class SleepOverlayController: NSObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
+                self?.isScreenLocked = true
                 guard isPlaying() else { return }
-                self?.show(spotify: spotify, lyrics: lyrics)
+                self?.present(spotify: spotify, lyrics: lyrics, mode: .lockScreen)
             }
         }
         unlockObserver = distributedCenter.addObserver(
@@ -84,9 +150,8 @@ final class SleepOverlayController: NSObject {
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                guard isPlaying() else { return }
+                self?.isScreenLocked = false
                 self?.hide()
-                self?.show(spotify: spotify, lyrics: lyrics)
             }
         }
         sleepObserver = workspaceCenter.addObserver(
@@ -94,21 +159,34 @@ final class SleepOverlayController: NSObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in
-                guard isPlaying() else { return }
-                self?.show(spotify: spotify, lyrics: lyrics)
-            }
+            // A lid close, explicit Sleep command, or power emergency may
+            // force sleep despite the idle-sleep activity. Release all UI
+            // and power resources before suspension.
+            Task { @MainActor in self?.hide() }
         }
         wakeObserver = workspaceCenter.addObserver(
             forName: NSWorkspace.didWakeNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            // Clears any pre-sleep window right as the (possibly
-            // password-protected) lock screen appears, so stale state
-            // doesn't linger behind it — the real re-show happens on
-            // screenIsUnlocked once the user actually gets back in.
-            Task { @MainActor in self?.hide() }
+            Task { @MainActor in
+                guard let self, self.isScreenLocked, isPlaying() else { return }
+                self.present(spotify: spotify, lyrics: lyrics, mode: .lockScreen)
+            }
         }
+    }
+
+    private func beginLockScreenActivity() {
+        guard lockScreenActivity == nil else { return }
+        lockScreenActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.idleSystemSleepDisabled, .idleDisplaySleepDisabled],
+            reason: "Showing Spotify playback while the Mac is locked"
+        )
+    }
+
+    private func endLockScreenActivity() {
+        guard let lockScreenActivity else { return }
+        ProcessInfo.processInfo.endActivity(lockScreenActivity)
+        self.lockScreenActivity = nil
     }
 }

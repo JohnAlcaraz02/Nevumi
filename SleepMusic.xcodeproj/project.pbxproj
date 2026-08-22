@@ -18,7 +18,9 @@
 		54E04644580B951A75E9F470 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A762CF8B0012B9587B76DDB /* DynamicNotchKit */; };
 		55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */; };
 		5B7B4191AA25C41D669C17D8 /* SleepOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */; };
+		7211622A4D8404F5CA1AB313 /* SkyLightWindow in Frameworks */ = {isa = PBXBuildFile; productRef = 5BB127A334D027B44685767F /* SkyLightWindow */; };
 		737F9DCF360F84C8E27EC023 /* SpotifyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */; };
+		82A7EDBB56A5A3BFDB5A9507 /* NotchConvertCardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04DF18BBB699AB5C9E3BC9D4 /* NotchConvertCardController.swift */; };
 		8FEFAA2B0737FCD6966A3463 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */; };
 		90142DDDA87C569279B0A10F /* ArtworkPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C1126AF67089FD167627A33 /* ArtworkPalette.swift */; };
 		9677D9F928D32989565C83EA /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */; };
@@ -39,6 +41,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		04DF18BBB699AB5C9E3BC9D4 /* NotchConvertCardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchConvertCardController.swift; sourceTree = "<group>"; };
 		0773BE56ED4A97032993C40D /* AudioCategory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCategory.swift; sourceTree = "<group>"; };
 		0F630F146DDAA6790D947A22 /* SleepMusic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SleepMusic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		123834E3C59029C62E996E2B /* AudioTrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioTrack.swift; sourceTree = "<group>"; };
@@ -76,6 +79,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				54E04644580B951A75E9F470 /* DynamicNotchKit in Frameworks */,
+				7211622A4D8404F5CA1AB313 /* SkyLightWindow in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,6 +152,7 @@
 				19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */,
 				3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */,
 				E143833A08369E3FBAC8B3FC /* NotchController.swift */,
+				04DF18BBB699AB5C9E3BC9D4 /* NotchConvertCardController.swift */,
 				A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */,
 				2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */,
 				DF26F01B227D72879552E9CB /* QuickAssistantFileConverter.swift */,
@@ -173,7 +178,7 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_20E9F45B-DB6D-480F-BAD1-41C3CD3F44E0" /* Resources */ = {
+		"TEMP_A1658C15-9E2F-4045-BECB-4B18E0F5E0A1" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -197,6 +202,7 @@
 			name = SleepMusic;
 			packageProductDependencies = (
 				7A762CF8B0012B9587B76DDB /* DynamicNotchKit */,
+				5BB127A334D027B44685767F /* SkyLightWindow */,
 			);
 			productName = SleepMusic;
 			productReference = 0F630F146DDAA6790D947A22 /* SleepMusic.app */;
@@ -227,6 +233,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				556E7BE653000DB6F2A9CBF3 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */,
+				9C7A3AFF26E1E38770FADB80 /* XCRemoteSwiftPackageReference "SkyLightWindow" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 38CFD23C0FFB7856B1AF3B88 /* Products */;
@@ -258,6 +265,7 @@
 				EF3ED4B3372F5E9073B7B280 /* LyricsViewModel.swift in Sources */,
 				8FEFAA2B0737FCD6966A3463 /* MenuBarContentView.swift in Sources */,
 				B372E44D91722FDAD6FFB711 /* NotchController.swift in Sources */,
+				82A7EDBB56A5A3BFDB5A9507 /* NotchConvertCardController.swift in Sources */,
 				3A2A907D9F47D3D474ECE7A2 /* NotchFileDropController.swift in Sources */,
 				F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */,
 				524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */,
@@ -470,9 +478,22 @@
 				version = 1.1.0;
 			};
 		};
+		9C7A3AFF26E1E38770FADB80 /* XCRemoteSwiftPackageReference "SkyLightWindow" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Lakr233/SkyLightWindow";
+			requirement = {
+				kind = exactVersion;
+				version = 1.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		5BB127A334D027B44685767F /* SkyLightWindow */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9C7A3AFF26E1E38770FADB80 /* XCRemoteSwiftPackageReference "SkyLightWindow" */;
+			productName = SkyLightWindow;
+		};
 		7A762CF8B0012B9587B76DDB /* DynamicNotchKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 556E7BE653000DB6F2A9CBF3 /* XCRemoteSwiftPackageReference "DynamicNotchKit" */;

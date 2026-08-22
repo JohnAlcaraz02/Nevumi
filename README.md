@@ -85,7 +85,7 @@ Clipboard content is limited to the first 8,000 characters and is only read when
 
 Open Quick Assistant, then drag one or more supported files anywhere onto its card. The assistant remains visible while Finder is active. You can also click the paperclip button and choose multiple files manually.
 
-You can also drag one or more supported files directly onto the physical MacBook notch, even when Spotify is not playing. The notch expands to show **Drop to convert**; releasing opens Quick Assistant with the files attached and ready to analyze or convert.
+You can also drag one or more supported files directly onto the physical MacBook notch, even when Spotify is not playing. The notch expands to show **Drop to convert**; releasing shows a compact convert card where you pick an output format. Converted files are saved next to the originals, or into a folder you choose for multi-page PDFs.
 
 Supported inputs:
 
@@ -181,7 +181,9 @@ You can start it from:
 - The menu-bar command **Enter Sleep Mode**
 - Quick Assistant using a command containing `sleep mode`
 
-SleepMusic also observes screen lock, unlock, sleep, and wake events while music is playing. macOS does not allow ordinary apps to draw over the secure password screen, so the overlay may appear after unlocking instead.
+SleepMusic also observes screen lock, unlock, sleep, and wake events while music is playing. While locked, it presents a click-through player that does not intercept password input and temporarily prevents idle display/system sleep. Forced sleep from closing the lid, choosing Sleep, low battery, or thermal protection is always respected.
+
+Lock-screen placement uses the private SkyLight window-space API through the pinned SkyLightWindow package. This is the same class of mechanism used by dedicated macOS lock-screen widget apps, but it can require maintenance after major macOS updates.
 
 Press any key or click to dismiss Sleep Mode.
 
@@ -199,7 +201,7 @@ Press any key or click to dismiss Sleep Mode.
 - General assistant responses use Apple's on-device model when available.
 - Clipboard text is read only for assistant requests that mention `clipboard`.
 - Lyrics and artwork require network access.
-- SleepMusic cannot display content over the real macOS password screen.
+- SleepMusic's lock-screen surface never reads or intercepts password input.
 
 ## Project structure
 

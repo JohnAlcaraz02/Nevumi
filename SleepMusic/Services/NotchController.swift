@@ -14,6 +14,8 @@ final class NotchPlaybackState: ObservableObject {
     @Published var artworkURL: URL?
     @Published var duration: TimeInterval = 0
     @Published var currentLyric: String?
+    @Published var isFileDropTargeted = false
+    @Published var fileDropName: String?
 }
 
 /// Mirrors now-playing + the current lyric line into a small pill that hugs
@@ -29,6 +31,8 @@ final class NotchController {
     private var notch: DynamicNotch<AnyView, AnyView, AnyView>?
     private var hoverCancellable: AnyCancellable?
     private var isShown = false
+    private var isShowingFileDrop = false
+    private var isSpotifyRunning = false
     private var spotify: SpotifyObserver!
 
     private init() {}
@@ -47,11 +51,39 @@ final class NotchController {
         state.artworkURL = artworkURL
         state.duration = duration
         state.currentLyric = currentLyric
+        self.isSpotifyRunning = isSpotifyRunning
 
+        guard !isShowingFileDrop else { return }
         if isSpotifyRunning {
             showIfNeeded()
         } else {
             hide()
+        }
+    }
+
+    /// Reuses the music player's DynamicNotch for file-drop feedback. The
+    /// window ignores pointer events during the drag so the native receiver
+    /// underneath continues to receive Finder's drop messages.
+    func setFileDropTargeted(_ targeted: Bool, fileName: String?) {
+        state.fileDropName = fileName
+        guard isShowingFileDrop != targeted else { return }
+
+        isShowingFileDrop = targeted
+        state.isFileDropTargeted = targeted
+
+        if targeted {
+            showIfNeeded()
+            notch?.windowController?.window?.ignoresMouseEvents = true
+            if let notch {
+                Task { await notch.expand() }
+            }
+        } else {
+            notch?.windowController?.window?.ignoresMouseEvents = false
+            if isSpotifyRunning, let notch {
+                Task { await notch.compact() }
+            } else {
+                hide()
+            }
         }
     }
 
@@ -76,8 +108,9 @@ final class NotchController {
 
         hoverCancellable = notch.$isHovering
             .removeDuplicates()
-            .sink { hovering in
+            .sink { [weak self] hovering in
                 Task { @MainActor in
+                    guard self?.isShowingFileDrop == false else { return }
                     if hovering {
                         await notch.expand()
                     } else {
@@ -86,7 +119,15 @@ final class NotchController {
                 }
             }
 
-        Task { await notch.compact() }
+        if isShowingFileDrop {
+            notch.windowController?.window?.ignoresMouseEvents = true
+            Task { @MainActor in
+                await notch.expand()
+                notch.windowController?.window?.ignoresMouseEvents = true
+            }
+        } else {
+            Task { await notch.compact() }
+        }
     }
 
     private func hide() {
@@ -133,23 +174,30 @@ private struct NotchExpandedView: View {
     @ObservedObject var spotify: SpotifyObserver
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            header
-            progressSection
-            transportControls
+        Group {
+            if state.isFileDropTargeted {
+                NotchFileDropExpandedView(fileName: state.fileDropName)
+            } else {
+                VStack(alignment: .leading, spacing: 14) {
+                    header
+                    progressSection
+                    transportControls
 
-            if let lyric = state.currentLyric, !lyric.isEmpty {
-                Text(lyric)
-                    .font(.system(size: 13, weight: .medium, design: .rounded))
-                    .foregroundStyle(.white.opacity(0.85))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                    .transition(.opacity)
-                    .animation(.easeInOut(duration: 0.3), value: lyric)
+                    if let lyric = state.currentLyric, !lyric.isEmpty {
+                        Text(lyric)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.85))
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                            .transition(.opacity)
+                            .animation(.easeInOut(duration: 0.3), value: lyric)
+                    }
+                }
+                .padding(.horizontal, 4)
+                .frame(minWidth: 260, maxWidth: 340, alignment: .leading)
             }
         }
-        .padding(.horizontal, 4)
-        .frame(minWidth: 260, maxWidth: 340, alignment: .leading)
+        .animation(.easeOut(duration: 0.16), value: state.isFileDropTargeted)
     }
 
     private var header: some View {
@@ -250,5 +298,45 @@ private struct NotchExpandedView: View {
     private func timeString(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds))
         return String(format: "%d:%02d", total / 60, total % 60)
+    }
+}
+
+/// Content only—the surrounding shape and animation are supplied by the
+/// exact same DynamicNotch instance used for the music player.
+private struct NotchFileDropExpandedView: View {
+    let fileName: String?
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: "arrow.down.doc.fill")
+                    .font(.system(size: 21, weight: .semibold))
+                    .foregroundStyle(.green)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Drop to convert")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+
+                    if let fileName {
+                        Text(fileName)
+                            .font(.system(size: 11, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.58))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
+                }
+            }
+
+            Text("Release to choose an output format")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundStyle(.white.opacity(0.45))
+        }
+        .frame(minWidth: 260, minHeight: 107)
+        .overlay(alignment: .bottom) {
+            Capsule()
+                .fill(.green.opacity(0.85))
+                .frame(width: 54, height: 2)
+        }
     }
 }

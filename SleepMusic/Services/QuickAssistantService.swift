@@ -556,7 +556,7 @@ final class QuickAssistantViewModel: ObservableObject {
     }
 }
 
-private enum AssistantFileAnalyzer {
+enum AssistantFileAnalyzer {
     private static let maximumTextCharacters = 40_000
     private static let maximumPDFPages = 20
     private static let maximumOCRPages = 5
