@@ -18,6 +18,11 @@ struct MenuBarContentView: View {
         }
         .disabled(coordinator.spotify.nowPlaying == nil)
 
+        Button("Open Quick Assistant") {
+            QuickAssistantWindowController.shared.show()
+        }
+        .keyboardShortcut(.space, modifiers: .option)
+
         Divider()
 
         Toggle(

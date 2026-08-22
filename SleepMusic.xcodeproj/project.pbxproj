@@ -7,9 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		15FEA84BE1E4EBD68A05FD80 /* QuickAssistantOutputActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D044059359C73F9BF9E8FEAB /* QuickAssistantOutputActions.swift */; };
 		22DCC238BD544F2C4DC49716 /* LyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */; };
 		25CA0C90D844A5C3B712F6E3 /* AudioLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509F1B613056715C96EF51EE /* AudioLibraryService.swift */; };
+		38E7D841C76BC039F15BBA57 /* QuickAssistantWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A33D0BDD119232779FB329 /* QuickAssistantWindowController.swift */; };
+		3A2A907D9F47D3D474ECE7A2 /* NotchFileDropController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */; };
 		3C5E15E06B3AFF7FE795C124 /* AmbientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29EE891A7BAFF57CA2FFC62F /* AmbientBackground.swift */; };
+		4EDE8FDF9E0F7BFCDA5D8F21 /* QuickAssistantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAEE5006279529AB173483 /* QuickAssistantService.swift */; };
 		524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */; };
 		54E04644580B951A75E9F470 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A762CF8B0012B9587B76DDB /* DynamicNotchKit */; };
 		55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */; };
@@ -24,8 +28,11 @@
 		B201BBA47E18E24E69637FED /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */; };
 		B372E44D91722FDAD6FFB711 /* NotchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E143833A08369E3FBAC8B3FC /* NotchController.swift */; };
 		CE1CA8AC2716BBBCF73D786D /* AudioTrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123834E3C59029C62E996E2B /* AudioTrack.swift */; };
+		D408DAAB9F020B597DB00EB5 /* QuickAssistantFileConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF26F01B227D72879552E9CB /* QuickAssistantFileConverter.swift */; };
 		D75B294F1FDCDC339F0FB404 /* EqualizerIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = D422093973C9CB9A3F614406 /* EqualizerIcon.swift */; };
+		DA1CBB50551AE7C26EE3A440 /* GlobalHotKeyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B73AD237704CA196127A417A /* GlobalHotKeyController.swift */; };
 		DF89D33D12BEB8472E58C3B5 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65494129A00A595E06CD1C2E /* AppCoordinator.swift */; };
+		EC6919C9F8DB9882245FA4C2 /* QuickAssistantView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B52BF9C09655B90A0DCE798 /* QuickAssistantView.swift */; };
 		EF3ED4B3372F5E9073B7B280 /* LyricsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */; };
 		F0AFEB6EEC5F340BE29763EF /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */; };
 		F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */; };
@@ -44,14 +51,21 @@
 		4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricLine.swift; sourceTree = "<group>"; };
 		509F1B613056715C96EF51EE /* AudioLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioLibraryService.swift; sourceTree = "<group>"; };
 		65494129A00A595E06CD1C2E /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		66A33D0BDD119232779FB329 /* QuickAssistantWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantWindowController.swift; sourceTree = "<group>"; };
+		6B52BF9C09655B90A0DCE798 /* QuickAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantView.swift; sourceTree = "<group>"; };
 		6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepMusicApp.swift; sourceTree = "<group>"; };
 		7C1126AF67089FD167627A33 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
+		A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchFileDropController.swift; sourceTree = "<group>"; };
+		B73AD237704CA196127A417A /* GlobalHotKeyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyController.swift; sourceTree = "<group>"; };
 		BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayController.swift; sourceTree = "<group>"; };
 		BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsViewModel.swift; sourceTree = "<group>"; };
+		C0CAEE5006279529AB173483 /* QuickAssistantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantService.swift; sourceTree = "<group>"; };
+		D044059359C73F9BF9E8FEAB /* QuickAssistantOutputActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantOutputActions.swift; sourceTree = "<group>"; };
 		D422093973C9CB9A3F614406 /* EqualizerIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerIcon.swift; sourceTree = "<group>"; };
+		DF26F01B227D72879552E9CB /* QuickAssistantFileConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantFileConverter.swift; sourceTree = "<group>"; };
 		E143833A08369E3FBAC8B3FC /* NotchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchController.swift; sourceTree = "<group>"; };
 		FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -130,10 +144,16 @@
 				7C1126AF67089FD167627A33 /* ArtworkPalette.swift */,
 				4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */,
 				509F1B613056715C96EF51EE /* AudioLibraryService.swift */,
+				B73AD237704CA196127A417A /* GlobalHotKeyController.swift */,
 				19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */,
 				3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */,
 				E143833A08369E3FBAC8B3FC /* NotchController.swift */,
+				A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */,
 				2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */,
+				DF26F01B227D72879552E9CB /* QuickAssistantFileConverter.swift */,
+				D044059359C73F9BF9E8FEAB /* QuickAssistantOutputActions.swift */,
+				C0CAEE5006279529AB173483 /* QuickAssistantService.swift */,
+				66A33D0BDD119232779FB329 /* QuickAssistantWindowController.swift */,
 				BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */,
 				4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */,
 				7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */,
@@ -147,12 +167,13 @@
 				29EE891A7BAFF57CA2FFC62F /* AmbientBackground.swift */,
 				D422093973C9CB9A3F614406 /* EqualizerIcon.swift */,
 				A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */,
+				6B52BF9C09655B90A0DCE798 /* QuickAssistantView.swift */,
 				FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_008BBE5D-F2D7-4A46-AA81-83DEA092A88F" /* Resources */ = {
+		"TEMP_20E9F45B-DB6D-480F-BAD1-41C3CD3F44E0" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -230,14 +251,21 @@
 				25CA0C90D844A5C3B712F6E3 /* AudioLibraryService.swift in Sources */,
 				CE1CA8AC2716BBBCF73D786D /* AudioTrack.swift in Sources */,
 				D75B294F1FDCDC339F0FB404 /* EqualizerIcon.swift in Sources */,
+				DA1CBB50551AE7C26EE3A440 /* GlobalHotKeyController.swift in Sources */,
 				B201BBA47E18E24E69637FED /* LoginItemManager.swift in Sources */,
 				55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */,
 				22DCC238BD544F2C4DC49716 /* LyricsService.swift in Sources */,
 				EF3ED4B3372F5E9073B7B280 /* LyricsViewModel.swift in Sources */,
 				8FEFAA2B0737FCD6966A3463 /* MenuBarContentView.swift in Sources */,
 				B372E44D91722FDAD6FFB711 /* NotchController.swift in Sources */,
+				3A2A907D9F47D3D474ECE7A2 /* NotchFileDropController.swift in Sources */,
 				F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */,
 				524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */,
+				D408DAAB9F020B597DB00EB5 /* QuickAssistantFileConverter.swift in Sources */,
+				15FEA84BE1E4EBD68A05FD80 /* QuickAssistantOutputActions.swift in Sources */,
+				4EDE8FDF9E0F7BFCDA5D8F21 /* QuickAssistantService.swift in Sources */,
+				EC6919C9F8DB9882245FA4C2 /* QuickAssistantView.swift in Sources */,
+				38E7D841C76BC039F15BBA57 /* QuickAssistantWindowController.swift in Sources */,
 				9D9FC6028C04F83706ADD811 /* SleepMusicApp.swift in Sources */,
 				AC1E6AFB7E07FC2242466FA8 /* SleepOverlayController.swift in Sources */,
 				5B7B4191AA25C41D669C17D8 /* SleepOverlayView.swift in Sources */,

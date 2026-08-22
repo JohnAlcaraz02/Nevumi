@@ -1,0 +1,669 @@
+import AppKit
+import Foundation
+import FoundationModels
+import PDFKit
+import UniformTypeIdentifiers
+import Vision
+
+struct QuickAssistantAttachment: Identifiable, Equatable {
+    let id = UUID()
+    let url: URL
+    let typeName: String
+    let extractedText: String
+
+    var name: String { url.lastPathComponent }
+    var hasReadableText: Bool { !extractedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+}
+
+enum AssistantAutomaticOutputAction: String, CaseIterable, Identifiable {
+    case none
+    case reveal
+    case copy
+    case compress
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .none: return "Do Nothing"
+        case .reveal: return "Reveal in Finder"
+        case .copy: return "Copy to Clipboard"
+        case .compress: return "Compress to ZIP"
+        }
+    }
+}
+
+@MainActor
+final class QuickAssistantViewModel: ObservableObject {
+    @Published var query = ""
+    @Published private(set) var response = ""
+    @Published private(set) var isWorking = false
+    @Published private(set) var focusRequest = 0
+    @Published private(set) var attachments: [QuickAssistantAttachment] = []
+    @Published private(set) var isAnalyzingAttachment = false
+    @Published private(set) var isConverting = false
+    @Published private(set) var convertedFiles: [URL] = []
+    @Published private(set) var automaticOutputAction: AssistantAutomaticOutputAction = .none
+
+    private let spotify: SpotifyObserver
+    private let lyrics: LyricsViewModel
+    private var requestTask: Task<Void, Never>?
+    private lazy var session = LanguageModelSession(
+        instructions: """
+        You are the concise personal assistant inside a small Mac notch panel.
+        Answer in plain text using at most four short sentences unless the user
+        explicitly asks for detail. Never claim that you performed an action.
+        Music and Sleep Mode actions are handled separately by the app.
+        """
+    )
+
+    init(spotify: SpotifyObserver, lyrics: LyricsViewModel) {
+        self.spotify = spotify
+        self.lyrics = lyrics
+        if let stored = UserDefaults.standard.string(forKey: "assistantAutomaticOutputAction"),
+           let action = AssistantAutomaticOutputAction(rawValue: stored) {
+            automaticOutputAction = action
+        }
+    }
+
+    var attachment: QuickAssistantAttachment? { attachments.first }
+
+    deinit {
+        requestTask?.cancel()
+    }
+
+    func prepareForPresentation() {
+        focusRequest += 1
+    }
+
+    func useSuggestion(_ suggestion: String) {
+        query = suggestion
+        submit()
+    }
+
+    func attachFile(_ url: URL) {
+        attachFiles([url])
+    }
+
+    func attachFiles(_ urls: [URL]) {
+        let uniqueURLs = Array(NSOrderedSet(array: urls).compactMap { $0 as? URL })
+        guard !uniqueURLs.isEmpty else { return }
+
+        requestTask?.cancel()
+        isWorking = false
+        isConverting = false
+        isAnalyzingAttachment = true
+        attachments = []
+        convertedFiles = []
+        response = uniqueURLs.count == 1
+            ? "Reading \(uniqueURLs[0].lastPathComponent)…"
+            : "Reading \(uniqueURLs.count) files…"
+
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            var analyzedFiles: [QuickAssistantAttachment] = []
+            var failures: [String] = []
+
+            for url in uniqueURLs {
+                do {
+                    analyzedFiles.append(try await AssistantFileAnalyzer.analyze(url))
+                } catch is CancellationError {
+                    return
+                } catch {
+                    failures.append("\(url.lastPathComponent): \(error.localizedDescription)")
+                }
+                guard !Task.isCancelled else { return }
+            }
+
+            attachments = analyzedFiles
+            if analyzedFiles.isEmpty {
+                response = "I couldn’t attach those files. \(failures.first ?? "No supported files were found.")"
+            } else if analyzedFiles.count == 1 {
+                let analyzed = analyzedFiles[0]
+                if QuickAssistantFileConverter.detectedContentType(for: analyzed.url)?.conforms(to: .audio) == true {
+                    response = "\(analyzed.name) is ready. Choose WAV, AIFF, or CAF from Convert."
+                } else {
+                    response = analyzed.hasReadableText
+                        ? "\(analyzed.name) is ready. Ask a question or choose an action below."
+                        : "I attached \(analyzed.name), but couldn’t find readable text in it."
+                }
+            } else {
+                let skipped = failures.isEmpty ? "" : " \(failures.count) unsupported file(s) were skipped."
+                response = "\(analyzedFiles.count) files are ready for analysis or batch conversion.\(skipped)"
+            }
+            isAnalyzingAttachment = false
+            focusRequest += 1
+        }
+    }
+
+    func removeAttachment() {
+        requestTask?.cancel()
+        isAnalyzingAttachment = false
+        isConverting = false
+        attachments = []
+        convertedFiles = []
+        response = ""
+        focusRequest += 1
+    }
+
+    func submit() {
+        let request = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !request.isEmpty, !isWorking, !isConverting, !isAnalyzingAttachment else { return }
+
+        query = ""
+        requestTask?.cancel()
+
+        if handleConversionCommand(request) { return }
+
+        if let localResponse = performLocalCommand(request) {
+            response = localResponse
+            return
+        }
+
+        guard SystemLanguageModel.default.isAvailable else {
+            response = "Apple Intelligence is unavailable on this Mac. You can still say “play or pause,” “next song,” “previous song,” “what song is playing,” or “enter sleep mode.”"
+            return
+        }
+
+        isWorking = true
+        response = ""
+        let prompt = contextualPrompt(for: request)
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let result = try await session.respond(to: prompt)
+                guard !Task.isCancelled else { return }
+                response = result.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            } catch is CancellationError {
+                return
+            } catch {
+                response = "I couldn’t answer that right now. \(error.localizedDescription)"
+            }
+            isWorking = false
+        }
+    }
+
+    var availableConversionFormats: [AssistantConversionFormat] {
+        guard let first = attachments.first else { return [] }
+        let firstFormats = QuickAssistantFileConverter.availableFormats(for: first.url)
+        return firstFormats.filter { format in
+            attachments.dropFirst().allSatisfy {
+                QuickAssistantFileConverter.availableFormats(for: $0.url).contains(format)
+            }
+        }
+    }
+
+    func convertAttachment(to format: AssistantConversionFormat) {
+        guard let attachment = attachments.first else {
+            response = "Attach a file before converting it."
+            return
+        }
+        guard availableConversionFormats.contains(format) else {
+            response = "\(format.displayName) isn’t available for this file type."
+            return
+        }
+        let destination: URL?
+        if attachments.count > 1 {
+            destination = chooseBatchConversionFolder()
+        } else {
+            destination = chooseConversionDestination(for: attachment, format: format)
+        }
+        guard let destination else { return }
+
+        isConverting = true
+        convertedFiles = []
+        response = attachments.count == 1
+            ? "Converting \(attachment.name) to \(format.displayName)…"
+            : "Converting \(attachments.count) files to \(format.displayName)…"
+        let filesToConvert = attachments
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isConverting = false }
+            do {
+                let outputs = try await Task.detached(priority: .userInitiated) {
+                    if filesToConvert.count > 1 {
+                        return try QuickAssistantFileConverter.convertBatch(
+                            filesToConvert.map {
+                                .init(source: $0.url, extractedText: $0.extractedText)
+                            },
+                            to: format,
+                            folder: destination
+                        )
+                    }
+                    return try QuickAssistantFileConverter.convert(
+                        source: attachment.url,
+                        extractedText: attachment.extractedText,
+                        to: format,
+                        destination: destination
+                    )
+                }.value
+                guard !Task.isCancelled else { return }
+                convertedFiles = outputs
+                if filesToConvert.count > 1 {
+                    response = "Converted \(filesToConvert.count) files into \(outputs.count) output item(s)."
+                } else {
+                    response = outputs.count == 1
+                        ? "Converted successfully to \(outputs[0].lastPathComponent)."
+                        : "Converted \(outputs.count) PDF pages to \(format.displayName)."
+                }
+                do {
+                    try await runAutomaticOutputAction()
+                } catch {
+                    response += " Automatic output action failed: \(error.localizedDescription)"
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                response = "Conversion failed. \(error.localizedDescription)"
+            }
+            focusRequest += 1
+        }
+    }
+
+    func revealConvertedFiles() {
+        guard !convertedFiles.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting(convertedFiles)
+    }
+
+    func setAutomaticOutputAction(_ action: AssistantAutomaticOutputAction) {
+        automaticOutputAction = action
+        UserDefaults.standard.set(action.rawValue, forKey: "assistantAutomaticOutputAction")
+        response = action == .none
+            ? "Automatic output actions are off."
+            : "After conversion, SleepMusic will \(action.displayName.lowercased())."
+    }
+
+    func copyConvertedFiles() {
+        guard copyOutputsToClipboard() else {
+            response = "There are no converted files to copy."
+            return
+        }
+        response = convertedFiles.count == 1
+            ? "Copied the converted file to the clipboard."
+            : "Copied \(convertedFiles.count) converted files to the clipboard."
+    }
+
+    func compressConvertedFiles() {
+        guard !convertedFiles.isEmpty else {
+            response = "There are no converted files to compress."
+            return
+        }
+        guard let destination = chooseArchiveDestination(for: convertedFiles) else { return }
+        compressConvertedFiles(to: destination)
+    }
+
+    func renameConvertedFile() {
+        guard convertedFiles.count == 1, let source = convertedFiles.first else {
+            response = "Rename is available when there is exactly one converted file."
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.title = "Rename Converted File"
+        panel.prompt = "Rename"
+        panel.canCreateDirectories = true
+        panel.directoryURL = source.deletingLastPathComponent()
+        panel.nameFieldStringValue = source.lastPathComponent
+        guard panel.runModal() == .OK, let destination = panel.url else { return }
+        guard destination != source else { return }
+        guard !FileManager.default.fileExists(atPath: destination.path) else {
+            response = QuickAssistantOutputActions.OutputActionError.destinationExists.localizedDescription
+            return
+        }
+
+        do {
+            try FileManager.default.moveItem(at: source, to: destination)
+            convertedFiles = [destination]
+            response = "Renamed the converted file to \(destination.lastPathComponent)."
+        } catch {
+            response = "Rename failed. \(error.localizedDescription)"
+        }
+    }
+
+    private func performLocalCommand(_ request: String) -> String? {
+        let command = request.lowercased().trimmingCharacters(in: .punctuationCharacters)
+
+        if command.contains("extract text") || command == "show text" {
+            guard !attachments.isEmpty else { return "Drop a PDF, image, or text file here first." }
+            let readable = attachments.filter(\.hasReadableText)
+            guard !readable.isEmpty else { return "I couldn’t find readable text in the attached files." }
+            return readable.map { "--- \($0.name) ---\n\($0.extractedText)" }.joined(separator: "\n\n")
+        }
+
+        if command.contains("copy converted") || command == "copy outputs" {
+            copyConvertedFiles()
+            return response
+        }
+        if command.contains("compress converted") || command.contains("zip converted") || command == "compress outputs" {
+            compressConvertedFiles()
+            return response
+        }
+        if command.contains("rename converted") || command == "rename output" {
+            renameConvertedFile()
+            return response
+        }
+        if command.contains("after conversion") {
+            if command.contains("compress") || command.contains("zip") {
+                setAutomaticOutputAction(.compress)
+            } else if command.contains("copy") || command.contains("clipboard") {
+                setAutomaticOutputAction(.copy)
+            } else if command.contains("reveal") || command.contains("finder") {
+                setAutomaticOutputAction(.reveal)
+            } else if command.contains("nothing") || command.contains("off") || command.contains("disable") {
+                setAutomaticOutputAction(.none)
+            } else {
+                return "Choose an after-conversion action: reveal, copy, compress, or off."
+            }
+            return response
+        }
+
+        if ["play", "pause", "play or pause", "toggle music", "toggle playback"].contains(command) {
+            spotify.togglePlayPause()
+            return "Spotify playback toggled."
+        }
+        if ["next", "next song", "skip", "skip song", "skip track"].contains(command) {
+            spotify.skipToNext()
+            return "Skipping to the next Spotify track."
+        }
+        if ["previous", "previous song", "previous track", "go back"].contains(command) {
+            spotify.skipToPrevious()
+            return "Going back to the previous Spotify track."
+        }
+        if command.contains("sleep mode") {
+            guard spotify.nowPlaying != nil else {
+                return "Play something in Spotify before entering Sleep Mode."
+            }
+            SleepOverlayController.shared.show(spotify: spotify, lyrics: lyrics)
+            return "Sleep Mode started. Click or press a key to leave it."
+        }
+        if command.contains("what song") || command.contains("what is playing") || command == "now playing" {
+            guard let track = spotify.nowPlaying else { return "Spotify isn’t playing anything right now." }
+            return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
+        }
+        if command == "help" || command == "what can you do" {
+            return "Ask a question, drop files to analyze or convert, then copy, compress, rename, or reveal the outputs. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
+        }
+        return nil
+    }
+
+    private func handleConversionCommand(_ request: String) -> Bool {
+        let command = request.lowercased()
+        guard command.contains("convert") else { return false }
+        guard !attachments.isEmpty else {
+            response = "Drop or attach a file before asking me to convert it."
+            return true
+        }
+
+        let requestedFormat: AssistantConversionFormat?
+        if command.contains("png") {
+            requestedFormat = .png
+        } else if command.contains("jpeg") || command.contains("jpg") {
+            requestedFormat = .jpeg
+        } else if command.contains("tiff") || command.contains("tif") {
+            requestedFormat = .tiff
+        } else if command.contains("pdf") {
+            requestedFormat = .pdf
+        } else if command.contains("text") || command.contains("txt") {
+            requestedFormat = .plainText
+        } else if command.contains("wav") {
+            requestedFormat = .wav
+        } else if command.contains("aiff") || command.contains("aif") {
+            requestedFormat = .aiff
+        } else if command.contains("caf") {
+            requestedFormat = .caf
+        } else {
+            response = "Choose an output format from the Convert menu."
+            return true
+        }
+
+        guard let requestedFormat, availableConversionFormats.contains(requestedFormat) else {
+            response = "That output format isn’t available for the attached file."
+            return true
+        }
+        convertAttachment(to: requestedFormat)
+        return true
+    }
+
+    private func chooseConversionDestination(
+        for attachment: QuickAssistantAttachment,
+        format: AssistantConversionFormat
+    ) -> URL? {
+        if QuickAssistantFileConverter.needsDestinationFolder(source: attachment.url, format: format) {
+            let panel = NSOpenPanel()
+            panel.title = "Choose a Folder for Converted Pages"
+            panel.prompt = "Convert Here"
+            panel.canChooseFiles = false
+            panel.canChooseDirectories = true
+            panel.allowsMultipleSelection = false
+            return panel.runModal() == .OK ? panel.url : nil
+        }
+
+        let panel = NSSavePanel()
+        panel.title = "Save Converted File"
+        panel.allowedContentTypes = [format.contentType]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = attachment.url
+            .deletingPathExtension()
+            .lastPathComponent + "." + format.fileExtension
+        return panel.runModal() == .OK ? panel.url : nil
+    }
+
+    private func chooseBatchConversionFolder() -> URL? {
+        let panel = NSOpenPanel()
+        panel.title = "Choose a Folder for Converted Files"
+        panel.prompt = "Convert Here"
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = true
+        return panel.runModal() == .OK ? panel.url : nil
+    }
+
+    private func chooseArchiveDestination(for files: [URL]) -> URL? {
+        let suggested = QuickAssistantOutputActions.automaticArchiveURL(for: files)
+        let panel = NSSavePanel()
+        panel.title = "Save ZIP Archive"
+        panel.prompt = "Compress"
+        panel.allowedContentTypes = [.zip]
+        panel.canCreateDirectories = true
+        panel.directoryURL = suggested.deletingLastPathComponent()
+        panel.nameFieldStringValue = suggested.lastPathComponent
+        guard panel.runModal() == .OK, let destination = panel.url else { return nil }
+        guard !FileManager.default.fileExists(atPath: destination.path) else {
+            response = QuickAssistantOutputActions.OutputActionError.destinationExists.localizedDescription
+            return nil
+        }
+        return destination
+    }
+
+    private func compressConvertedFiles(to destination: URL) {
+        let files = convertedFiles
+        isConverting = true
+        response = "Compressing \(files.count) converted file(s)…"
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isConverting = false }
+            do {
+                let archive = try await Task.detached(priority: .userInitiated) {
+                    try QuickAssistantOutputActions.compress(files, to: destination)
+                }.value
+                convertedFiles.append(archive)
+                response = "Created \(archive.lastPathComponent)."
+            } catch {
+                response = "Compression failed. \(error.localizedDescription)"
+            }
+            focusRequest += 1
+        }
+    }
+
+    private func runAutomaticOutputAction() async throws {
+        switch automaticOutputAction {
+        case .none:
+            return
+        case .reveal:
+            revealConvertedFiles()
+            response += " Revealed in Finder."
+        case .copy:
+            if copyOutputsToClipboard() { response += " Copied to the clipboard." }
+        case .compress:
+            let files = convertedFiles
+            let destination = QuickAssistantOutputActions.automaticArchiveURL(for: files)
+            let archive = try await Task.detached(priority: .userInitiated) {
+                try QuickAssistantOutputActions.compress(files, to: destination)
+            }.value
+            convertedFiles.append(archive)
+            response += " Compressed outputs to \(archive.lastPathComponent)."
+        }
+    }
+
+    private func copyOutputsToClipboard() -> Bool {
+        guard !convertedFiles.isEmpty else { return false }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        return pasteboard.writeObjects(convertedFiles.map { $0 as NSURL })
+    }
+
+    private func contextualPrompt(for request: String) -> String {
+        var context: [String] = []
+        if let track = spotify.nowPlaying {
+            context.append("Current Spotify track: \(track.title) by \(track.artist); playback is \(track.isPlaying ? "playing" : "paused").")
+        }
+        if let lyric = lyrics.currentLine?.text, !lyric.isEmpty {
+            context.append("Current lyric: \(lyric)")
+        }
+
+        if request.lowercased().contains("clipboard"),
+           let clipboard = NSPasteboard.general.string(forType: .string),
+           !clipboard.isEmpty {
+            context.append("Clipboard text:\n\(String(clipboard.prefix(8_000)))")
+        }
+
+        if !attachments.isEmpty {
+            context.append("Attached files: \(attachments.map { "\($0.name) (\($0.typeName))" }.joined(separator: ", ")).")
+            let readableText = attachments
+                .filter(\.hasReadableText)
+                .map { "File: \($0.name)\n\($0.extractedText)" }
+                .joined(separator: "\n\n")
+            if readableText.isEmpty {
+                context.append("No readable text was extracted from the attached files. Be transparent about that limitation.")
+            } else {
+                context.append("Extracted file text:\n\(String(readableText.prefix(12_000)))")
+            }
+        }
+
+        if context.isEmpty { return request }
+        return "\(context.joined(separator: "\n"))\n\nUser request: \(request)"
+    }
+}
+
+private enum AssistantFileAnalyzer {
+    private static let maximumTextCharacters = 40_000
+    private static let maximumPDFPages = 20
+    private static let maximumOCRPages = 5
+
+    static func analyze(_ url: URL) async throws -> QuickAssistantAttachment {
+        let hasSecurityAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if hasSecurityAccess { url.stopAccessingSecurityScopedResource() }
+        }
+
+        let values = try url.resourceValues(forKeys: [.isRegularFileKey])
+        guard values.isRegularFile == true else { throw FileAnalysisError.notAFile }
+        let type = QuickAssistantFileConverter.detectedContentType(for: url)
+
+        if type?.conforms(to: .pdf) == true {
+            let text = try await textFromPDF(url)
+            return QuickAssistantAttachment(url: url, typeName: "PDF", extractedText: limited(text))
+        }
+        if type?.conforms(to: .image) == true {
+            let text = try await recognizeText(in: url)
+            return QuickAssistantAttachment(url: url, typeName: type?.localizedDescription ?? "Image", extractedText: limited(text))
+        }
+        if type?.conforms(to: .text) == true || type?.conforms(to: .sourceCode) == true {
+            let data = try Data(contentsOf: url, options: .mappedIfSafe)
+            let prefix = Data(data.prefix(2_000_000))
+            let text = String(data: prefix, encoding: .utf8)
+                ?? String(data: prefix, encoding: .utf16)
+                ?? ""
+            return QuickAssistantAttachment(url: url, typeName: type?.localizedDescription ?? "Text", extractedText: limited(text))
+        }
+        if type?.conforms(to: .audio) == true {
+            return QuickAssistantAttachment(url: url, typeName: "Audio", extractedText: "")
+        }
+
+        throw FileAnalysisError.unsupportedType
+    }
+
+    private static func textFromPDF(_ url: URL) async throws -> String {
+        guard let document = PDFDocument(url: url) else { throw FileAnalysisError.unreadablePDF }
+        let pageCount = min(document.pageCount, maximumPDFPages)
+        var pageTexts: [String] = []
+
+        for index in 0..<pageCount {
+            guard let page = document.page(at: index) else { continue }
+            let embeddedText = page.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if !embeddedText.isEmpty {
+                pageTexts.append("Page \(index + 1):\n\(embeddedText)")
+            } else if index < maximumOCRPages,
+                      let image = cgImage(for: page) {
+                let recognized = try await recognizeText(in: image)
+                if !recognized.isEmpty {
+                    pageTexts.append("Page \(index + 1):\n\(recognized)")
+                }
+            }
+        }
+        return pageTexts.joined(separator: "\n\n")
+    }
+
+    private static func cgImage(for page: PDFPage) -> CGImage? {
+        let bounds = page.bounds(for: .mediaBox)
+        let targetWidth: CGFloat = 1_800
+        let scale = targetWidth / max(bounds.width, 1)
+        let image = page.thumbnail(
+            of: NSSize(width: targetWidth, height: max(bounds.height * scale, 1)),
+            for: .mediaBox
+        )
+        var proposedRect = NSRect(origin: .zero, size: image.size)
+        return image.cgImage(forProposedRect: &proposedRect, context: nil, hints: nil)
+    }
+
+    private static func recognizeText(in url: URL) async throws -> String {
+        var request = RecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.automaticallyDetectsLanguage = true
+        request.usesLanguageCorrection = true
+        let observations = try await request.perform(on: url)
+        return recognizedLines(from: observations)
+    }
+
+    private static func recognizeText(in image: CGImage) async throws -> String {
+        var request = RecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.automaticallyDetectsLanguage = true
+        request.usesLanguageCorrection = true
+        let observations = try await request.perform(on: image)
+        return recognizedLines(from: observations)
+    }
+
+    private static func recognizedLines(from observations: [RecognizedTextObservation]) -> String {
+        observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
+    }
+
+    private static func limited(_ text: String) -> String {
+        String(text.prefix(maximumTextCharacters))
+    }
+
+    private enum FileAnalysisError: LocalizedError {
+        case notAFile
+        case unsupportedType
+        case unreadablePDF
+
+        var errorDescription: String? {
+            switch self {
+            case .notAFile: return "The dropped item is not a regular file."
+            case .unsupportedType: return "Use a PDF, image, audio, plain-text, or source-code file."
+            case .unreadablePDF: return "The PDF could not be opened."
+            }
+        }
+    }
+}

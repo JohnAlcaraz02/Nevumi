@@ -14,6 +14,7 @@ final class SpotifyObserver: ObservableObject {
     }
 
     @Published private(set) var nowPlaying: NowPlaying?
+    @Published private(set) var isRunning = false
 
     private var timer: Timer?
     private var lastPosition: TimeInterval = 0
@@ -72,8 +73,25 @@ final class SpotifyObserver: ObservableObject {
     }
 
     private func poll() {
+        let isSpotifyRunning = !NSRunningApplication.runningApplications(
+            withBundleIdentifier: "com.spotify.client"
+        ).isEmpty
+
+        if isRunning != isSpotifyRunning {
+            isRunning = isSpotifyRunning
+        }
+
+        guard isSpotifyRunning else {
+            nowPlaying = nil
+            lastPosition = 0
+            lastPositionDate = .distantPast
+            return
+        }
+
         guard let (result, position) = Self.queryNowPlaying() else {
             nowPlaying = nil
+            lastPosition = 0
+            lastPositionDate = .distantPast
             return
         }
         nowPlaying = result

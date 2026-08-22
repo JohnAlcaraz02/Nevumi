@@ -40,7 +40,7 @@ final class NotchController {
         self.spotify = spotify
     }
 
-    func update(title: String, artist: String, isPlaying: Bool, artworkURL: URL?, duration: TimeInterval, currentLyric: String?) {
+    func update(title: String, artist: String, isPlaying: Bool, isSpotifyRunning: Bool, artworkURL: URL?, duration: TimeInterval, currentLyric: String?) {
         state.title = title
         state.artist = artist
         state.isPlaying = isPlaying
@@ -48,7 +48,7 @@ final class NotchController {
         state.duration = duration
         state.currentLyric = currentLyric
 
-        if isPlaying {
+        if isSpotifyRunning {
             showIfNeeded()
         } else {
             hide()

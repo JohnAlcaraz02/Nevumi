@@ -11,10 +11,15 @@ final class AppCoordinator: ObservableObject {
     let lyrics = LyricsViewModel()
 
     private var cancellables = Set<AnyCancellable>()
+    private var quickAssistantHotKey: GlobalHotKeyController?
 
     init() {
         lyrics.attachToSpotify(spotify)
         NotchController.shared.configure(spotify: spotify)
+        QuickAssistantWindowController.shared.configure(spotify: spotify, lyrics: lyrics)
+        quickAssistantHotKey = GlobalHotKeyController {
+            QuickAssistantWindowController.shared.toggle()
+        }
 
         spotify.$nowPlaying
             .sink { [weak self] nowPlaying in
@@ -22,6 +27,11 @@ final class AppCoordinator: ObservableObject {
                 lyrics.syncWithSpotify(nowPlaying)
                 updateNotch()
             }
+            .store(in: &cancellables)
+
+        spotify.$isRunning
+            .removeDuplicates()
+            .sink { [weak self] _ in self?.updateNotch() }
             .store(in: &cancellables)
 
         lyrics.$currentLine
@@ -39,9 +49,10 @@ final class AppCoordinator: ObservableObject {
 
     private func updateNotch() {
         NotchController.shared.update(
-            title: spotify.nowPlaying?.title ?? "",
-            artist: spotify.nowPlaying?.artist ?? "",
+            title: spotify.nowPlaying?.title ?? "Spotify",
+            artist: spotify.nowPlaying?.artist ?? "Ready to play",
             isPlaying: spotify.nowPlaying?.isPlaying ?? false,
+            isSpotifyRunning: spotify.isRunning,
             artworkURL: spotify.nowPlaying?.artworkURL,
             duration: spotify.nowPlaying?.duration ?? 0,
             currentLyric: lyrics.currentLine?.text
