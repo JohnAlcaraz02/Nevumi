@@ -29,6 +29,7 @@
 		AC1E6AFB7E07FC2242466FA8 /* SleepOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */; };
 		B201BBA47E18E24E69637FED /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */; };
 		B372E44D91722FDAD6FFB711 /* NotchController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E143833A08369E3FBAC8B3FC /* NotchController.swift */; };
+		C675E71744621E959D1E798F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1E1E824F55709A30436B8541 /* Assets.xcassets */; };
 		CE1CA8AC2716BBBCF73D786D /* AudioTrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 123834E3C59029C62E996E2B /* AudioTrack.swift */; };
 		D408DAAB9F020B597DB00EB5 /* QuickAssistantFileConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF26F01B227D72879552E9CB /* QuickAssistantFileConverter.swift */; };
 		D75B294F1FDCDC339F0FB404 /* EqualizerIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = D422093973C9CB9A3F614406 /* EqualizerIcon.swift */; };
@@ -46,6 +47,7 @@
 		0F630F146DDAA6790D947A22 /* SleepMusic.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SleepMusic.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		123834E3C59029C62E996E2B /* AudioTrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioTrack.swift; sourceTree = "<group>"; };
 		19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemManager.swift; sourceTree = "<group>"; };
+		1E1E824F55709A30436B8541 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingService.swift; sourceTree = "<group>"; };
 		29EE891A7BAFF57CA2FFC62F /* AmbientBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientBackground.swift; sourceTree = "<group>"; };
 		3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsService.swift; sourceTree = "<group>"; };
@@ -97,6 +99,7 @@
 		3D7AF5D5EC65F2708C3766BE /* SleepMusic */ = {
 			isa = PBXGroup;
 			children = (
+				1E1E824F55709A30436B8541 /* Assets.xcassets */,
 				DCB59C5355ED2E4135F67765 /* App */,
 				8BD704C75E6CDD8771D59C1E /* Models */,
 				F46508872FDF7211FF2AE49C /* Services */,
@@ -178,7 +181,7 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_A1658C15-9E2F-4045-BECB-4B18E0F5E0A1" /* Resources */ = {
+		"TEMP_B099AEC7-0B9C-4E68-9BC4-38886D1D2BE5" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -193,6 +196,7 @@
 			buildConfigurationList = 61A7E177455E1D58B7DA5F24 /* Build configuration list for PBXNativeTarget "SleepMusic" */;
 			buildPhases = (
 				ADC6F195707DF72058F489FA /* Sources */,
+				C2EEBBA527EE0143074AF5BC /* Resources */,
 				84712B2F8CB3B4B0A34F435F /* Frameworks */,
 			);
 			buildRules = (
@@ -244,6 +248,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C2EEBBA527EE0143074AF5BC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C675E71744621E959D1E798F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		ADC6F195707DF72058F489FA /* Sources */ = {
