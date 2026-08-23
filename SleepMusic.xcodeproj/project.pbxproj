@@ -20,6 +20,7 @@
 		5B7B4191AA25C41D669C17D8 /* SleepOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7F6BC8B87CDB2233836F05 /* SleepOverlayView.swift */; };
 		7211622A4D8404F5CA1AB313 /* SkyLightWindow in Frameworks */ = {isa = PBXBuildFile; productRef = 5BB127A334D027B44685767F /* SkyLightWindow */; };
 		737F9DCF360F84C8E27EC023 /* SpotifyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DC6EC505CD4151200F827E1 /* SpotifyObserver.swift */; };
+		794DB94FD4394670ADEB6E25 /* AirDropSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B732689907127D5C0D6FC690 /* AirDropSharingService.swift */; };
 		82A7EDBB56A5A3BFDB5A9507 /* NotchConvertCardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04DF18BBB699AB5C9E3BC9D4 /* NotchConvertCardController.swift */; };
 		8FEFAA2B0737FCD6966A3463 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */; };
 		90142DDDA87C569279B0A10F /* ArtworkPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C1126AF67089FD167627A33 /* ArtworkPalette.swift */; };
@@ -64,6 +65,7 @@
 		7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchFileDropController.swift; sourceTree = "<group>"; };
+		B732689907127D5C0D6FC690 /* AirDropSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirDropSharingService.swift; sourceTree = "<group>"; };
 		B73AD237704CA196127A417A /* GlobalHotKeyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyController.swift; sourceTree = "<group>"; };
 		BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayController.swift; sourceTree = "<group>"; };
 		BF3DD0BFE138E3EB65622449 /* LyricsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsViewModel.swift; sourceTree = "<group>"; };
@@ -148,6 +150,7 @@
 		F46508872FDF7211FF2AE49C /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				B732689907127D5C0D6FC690 /* AirDropSharingService.swift */,
 				7C1126AF67089FD167627A33 /* ArtworkPalette.swift */,
 				4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */,
 				509F1B613056715C96EF51EE /* AudioLibraryService.swift */,
@@ -181,7 +184,7 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_B099AEC7-0B9C-4E68-9BC4-38886D1D2BE5" /* Resources */ = {
+		"TEMP_2BE673E5-42F7-45E8-9513-0DB14B71CCCD" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -265,6 +268,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				794DB94FD4394670ADEB6E25 /* AirDropSharingService.swift in Sources */,
 				3C5E15E06B3AFF7FE795C124 /* AmbientBackground.swift in Sources */,
 				DF89D33D12BEB8472E58C3B5 /* AppCoordinator.swift in Sources */,
 				90142DDDA87C569279B0A10F /* ArtworkPalette.swift in Sources */,

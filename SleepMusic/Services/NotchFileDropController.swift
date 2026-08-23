@@ -61,13 +61,13 @@ final class NotchFileDropController: NSObject {
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
         let dropView = NotchFileDropDestinationView(state: state)
-        dropView.onFileDrop = { [weak self] urls in
-            self?.receive(urls)
+        dropView.onFileDrop = { [weak self] urls, action in
+            self?.receive(urls, action: action)
         }
-        dropView.onTargetingChanged = { [weak self] isTargeted, fileName in
+        dropView.onTargetingChanged = { [weak self] isTargeted, fileName, action in
             self?.state.isTargeted = isTargeted
             self?.state.fileName = fileName
-            self?.setExpanded(isTargeted)
+            self?.setExpanded(isTargeted, action: action)
         }
         panel.contentView = dropView
         self.panel = panel
@@ -114,15 +114,21 @@ final class NotchFileDropController: NSObject {
         panel?.orderFrontRegardless()
     }
 
-    private func receive(_ urls: [URL]) {
+    private func receive(_ urls: [URL], action: NotchDropAction) {
         setExpanded(false)
-        NotchConvertCardController.shared.present(files: urls)
+        switch action {
+        case .convert:
+            NotchConvertCardController.shared.present(files: urls)
+        case .airDrop:
+            AirDropSharingService.shared.share(urls)
+        }
     }
 
-    private func setExpanded(_ expanded: Bool) {
+    private func setExpanded(_ expanded: Bool, action: NotchDropAction = .convert) {
         NotchController.shared.setFileDropTargeted(
             expanded,
-            fileName: expanded ? state.fileName : nil
+            fileName: expanded ? state.fileName : nil,
+            action: action
         )
         guard isExpanded != expanded else { return }
         isExpanded = expanded
@@ -193,8 +199,8 @@ private final class NotchFileDropPanel: NSPanel {
 /// this registered view, while the hosting view remains responsible for the
 /// visual feedback.
 private final class NotchFileDropDestinationView: NSView {
-    var onFileDrop: (([URL]) -> Void)?
-    var onTargetingChanged: ((Bool, String?) -> Void)?
+    var onFileDrop: (([URL], NotchDropAction) -> Void)?
+    var onTargetingChanged: ((Bool, String?, NotchDropAction) -> Void)?
 
     private var isDragSessionActive = false
 
@@ -242,24 +248,24 @@ private final class NotchFileDropDestinationView: NSView {
         let urls = supportedFileURLs(from: sender)
         print("[NotchDrop] draggingEntered urls=\(urls?.map(\.lastPathComponent) ?? [])")
         guard let urls else {
-            onTargetingChanged?(false, nil)
+            onTargetingChanged?(false, nil, .convert)
             return []
         }
         isDragSessionActive = true
-        onTargetingChanged?(true, label(for: urls))
+        onTargetingChanged?(true, label(for: urls), dropAction(at: sender))
         return .copy
     }
 
     override func draggingUpdated(_ sender: any NSDraggingInfo) -> NSDragOperation {
         guard let urls = supportedFileURLs(from: sender) else { return [] }
         isDragSessionActive = true
-        onTargetingChanged?(true, label(for: urls))
+        onTargetingChanged?(true, label(for: urls), dropAction(at: sender))
         return .copy
     }
 
     override func draggingExited(_ sender: (any NSDraggingInfo)?) {
         isDragSessionActive = false
-        onTargetingChanged?(false, nil)
+        onTargetingChanged?(false, nil, .convert)
     }
 
     override func prepareForDragOperation(_ sender: any NSDraggingInfo) -> Bool {
@@ -268,22 +274,30 @@ private final class NotchFileDropDestinationView: NSView {
 
     override func performDragOperation(_ sender: any NSDraggingInfo) -> Bool {
         guard let urls = supportedFileURLs(from: sender) else {
-            onTargetingChanged?(false, nil)
+            onTargetingChanged?(false, nil, .convert)
             return false
         }
-        onTargetingChanged?(false, nil)
-        onFileDrop?(urls)
+        let action = dropAction(at: sender)
+        onTargetingChanged?(false, nil, action)
+        onFileDrop?(urls, action)
         return true
     }
 
     override func concludeDragOperation(_ sender: (any NSDraggingInfo)?) {
         isDragSessionActive = false
-        onTargetingChanged?(false, nil)
+        onTargetingChanged?(false, nil, .convert)
     }
 
     override func draggingEnded(_ sender: any NSDraggingInfo) {
         isDragSessionActive = false
-        onTargetingChanged?(false, nil)
+        onTargetingChanged?(false, nil, .convert)
+    }
+
+    /// The receiver is split in half: the left side converts, the right side
+    /// shares via AirDrop. The notch card mirrors this split.
+    private func dropAction(at sender: any NSDraggingInfo) -> NotchDropAction {
+        let point = convert(sender.draggingLocation, from: nil)
+        return point.x < bounds.midX ? .convert : .airDrop
     }
 
     private func supportedFileURLs(from sender: any NSDraggingInfo) -> [URL]? {
@@ -307,21 +321,27 @@ private final class NotchFileDropDestinationView: NSView {
         }
 
         var seen = Set<URL>()
-        let supported = urls
+        let files = urls
             .map(\.standardizedFileURL)
+            .filter(\.isFileURL)
             .filter { seen.insert($0).inserted }
-            .filter(Self.supports)
-        return supported.isEmpty ? nil : supported
+        // AirDrop accepts anything; conversion stays restricted to formats
+        // the converter understands.
+        let action = dropAction(at: sender)
+        switch action {
+        case .airDrop:
+            return files.isEmpty ? nil : files
+        case .convert:
+            let supported = files.filter(Self.supportsConversion)
+            return supported.isEmpty ? nil : supported
+        }
     }
 
     private func label(for urls: [URL]) -> String {
         urls.count == 1 ? urls[0].lastPathComponent : "\(urls.count) files"
     }
 
-    private static func supports(_ url: URL) -> Bool {
-        guard url.isFileURL else {
-            return false
-        }
+    private static func supportsConversion(_ url: URL) -> Bool {
         let values = try? url.resourceValues(forKeys: [.isDirectoryKey])
         guard values?.isDirectory != true else { return false }
         return !QuickAssistantFileConverter.availableFormats(for: url).isEmpty

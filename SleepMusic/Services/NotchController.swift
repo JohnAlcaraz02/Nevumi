@@ -3,6 +3,13 @@ import Combine
 import DynamicNotchKit
 import SwiftUI
 
+/// Which action the notch's drop area offers under the cursor: the left half
+/// converts the dragged files, the right half shares them via AirDrop.
+enum NotchDropAction {
+    case convert
+    case airDrop
+}
+
 /// What the notch pill currently shows. A reference type so the already-live
 /// `DynamicNotch` content redraws in place when playback changes, instead of
 /// the pill being torn down and rebuilt (which would restart its animations).
@@ -16,6 +23,7 @@ final class NotchPlaybackState: ObservableObject {
     @Published var currentLyric: String?
     @Published var isFileDropTargeted = false
     @Published var fileDropName: String?
+    @Published var fileDropAction: NotchDropAction = .convert
 }
 
 /// Mirrors now-playing + the current lyric line into a small pill that hugs
@@ -64,8 +72,9 @@ final class NotchController {
     /// Reuses the music player's DynamicNotch for file-drop feedback. The
     /// window ignores pointer events during the drag so the native receiver
     /// underneath continues to receive Finder's drop messages.
-    func setFileDropTargeted(_ targeted: Bool, fileName: String?) {
+    func setFileDropTargeted(_ targeted: Bool, fileName: String?, action: NotchDropAction = .convert) {
         state.fileDropName = fileName
+        state.fileDropAction = action
         guard isShowingFileDrop != targeted else { return }
 
         isShowingFileDrop = targeted
@@ -176,7 +185,7 @@ private struct NotchExpandedView: View {
     var body: some View {
         Group {
             if state.isFileDropTargeted {
-                NotchFileDropExpandedView(fileName: state.fileDropName)
+                NotchFileDropExpandedView(fileName: state.fileDropName, action: state.fileDropAction)
             } else {
                 VStack(alignment: .leading, spacing: 14) {
                     header
@@ -302,19 +311,22 @@ private struct NotchExpandedView: View {
 }
 
 /// Content only—the surrounding shape and animation are supplied by the
-/// exact same DynamicNotch instance used for the music player.
+/// exact same DynamicNotch instance used for the music player. The card
+/// mirrors the receiver's two halves (left: convert, right: AirDrop) and
+/// highlights whichever side the cursor is over.
 private struct NotchFileDropExpandedView: View {
     let fileName: String?
+    let action: NotchDropAction
 
     var body: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                Image(systemName: "arrow.down.doc.fill")
+                Image(systemName: icon)
                     .font(.system(size: 21, weight: .semibold))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(tint)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Drop to convert")
+                    Text(title)
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
 
@@ -328,15 +340,61 @@ private struct NotchFileDropExpandedView: View {
                 }
             }
 
-            Text("Release to choose an output format")
+            Text(subtitle)
                 .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundStyle(.white.opacity(0.45))
+
+            HStack {
+                zoneHint("Convert", isActive: action == .convert)
+                Spacer(minLength: 24)
+                zoneHint("AirDrop", isActive: action == .airDrop)
+            }
         }
         .frame(minWidth: 260, minHeight: 107)
         .overlay(alignment: .bottom) {
             Capsule()
-                .fill(.green.opacity(0.85))
+                .fill(tint.opacity(0.85))
                 .frame(width: 54, height: 2)
+        }
+        .animation(.easeInOut(duration: 0.15), value: action)
+    }
+
+    private var icon: String {
+        switch action {
+        case .convert: return "arrow.down.doc.fill"
+        case .airDrop: return "dot.radiowaves.left.and.right"
+        }
+    }
+
+    private var tint: Color {
+        switch action {
+        case .convert: return .green
+        case .airDrop: return .blue
+        }
+    }
+
+    private var title: String {
+        switch action {
+        case .convert: return "Drop to convert"
+        case .airDrop: return "Drop to AirDrop"
+        }
+    }
+
+    private var subtitle: String {
+        switch action {
+        case .convert: return "Release to choose an output format"
+        case .airDrop: return "Release to send to a nearby device"
+        }
+    }
+
+    private func zoneHint(_ label: String, isActive: Bool) -> some View {
+        HStack(spacing: 4) {
+            Circle()
+                .fill(isActive ? tint : .white.opacity(0.25))
+                .frame(width: 4, height: 4)
+            Text(label)
+                .font(.system(size: 9, weight: isActive ? .bold : .medium, design: .rounded))
+                .foregroundStyle(isActive ? .white.opacity(0.9) : .white.opacity(0.35))
         }
     }
 }
