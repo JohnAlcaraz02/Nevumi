@@ -103,7 +103,11 @@ After analysis, the attached-file toolbar provides these actions:
 | **Explain** | Explains the file's content in plain language |
 | **Extract text** | Displays the locally extracted text without requiring Apple Intelligence |
 | **Suggest a filename** | Suggests a descriptive filename based on the content |
+| **Enhance Photo** | Improves tone, color, noise, and detail locally while keeping the original untouched |
+| **Remove Background** | Isolates the foreground subject and saves it on a transparent background |
 | **Convert** | Converts the attachment to a compatible output format and saves it where you choose |
+
+For an attached image, choose **Image → Enhance Photo** or type `enhance photo`.
 
 Conversion formats:
 

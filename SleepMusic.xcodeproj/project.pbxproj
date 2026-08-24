@@ -10,10 +10,12 @@
 		15FEA84BE1E4EBD68A05FD80 /* QuickAssistantOutputActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D044059359C73F9BF9E8FEAB /* QuickAssistantOutputActions.swift */; };
 		22DCC238BD544F2C4DC49716 /* LyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E90F6AE0BE8C2C9449E5FB1 /* LyricsService.swift */; };
 		25CA0C90D844A5C3B712F6E3 /* AudioLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 509F1B613056715C96EF51EE /* AudioLibraryService.swift */; };
+		2F90940437D9C9317D9C5517 /* QuickAssistantBackgroundRemover.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8663C5C42551701DD7E367B /* QuickAssistantBackgroundRemover.swift */; };
 		38E7D841C76BC039F15BBA57 /* QuickAssistantWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A33D0BDD119232779FB329 /* QuickAssistantWindowController.swift */; };
 		3A2A907D9F47D3D474ECE7A2 /* NotchFileDropController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */; };
 		3C5E15E06B3AFF7FE795C124 /* AmbientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29EE891A7BAFF57CA2FFC62F /* AmbientBackground.swift */; };
 		4EDE8FDF9E0F7BFCDA5D8F21 /* QuickAssistantService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0CAEE5006279529AB173483 /* QuickAssistantService.swift */; };
+		4FE7295E5EC67DAADAE32F64 /* QuickAssistantImageEnhancer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E633AE018458A94621311E8 /* QuickAssistantImageEnhancer.swift */; };
 		524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */; };
 		54E04644580B951A75E9F470 /* DynamicNotchKit in Frameworks */ = {isa = PBXBuildFile; productRef = 7A762CF8B0012B9587B76DDB /* DynamicNotchKit */; };
 		55D6F8D0D86EFE8EBEE51708 /* LyricLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E56E5918EDCCA88FAFFCB70 /* LyricLine.swift */; };
@@ -59,12 +61,14 @@
 		65494129A00A595E06CD1C2E /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
 		66A33D0BDD119232779FB329 /* QuickAssistantWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantWindowController.swift; sourceTree = "<group>"; };
 		6B52BF9C09655B90A0DCE798 /* QuickAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantView.swift; sourceTree = "<group>"; };
+		6E633AE018458A94621311E8 /* QuickAssistantImageEnhancer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantImageEnhancer.swift; sourceTree = "<group>"; };
 		6F02ED37D0A66C8CB0D73233 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepMusicApp.swift; sourceTree = "<group>"; };
 		7C1126AF67089FD167627A33 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		7E725DF4BE4DD8EB39E092A9 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchFileDropController.swift; sourceTree = "<group>"; };
+		A8663C5C42551701DD7E367B /* QuickAssistantBackgroundRemover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantBackgroundRemover.swift; sourceTree = "<group>"; };
 		B732689907127D5C0D6FC690 /* AirDropSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirDropSharingService.swift; sourceTree = "<group>"; };
 		B73AD237704CA196127A417A /* GlobalHotKeyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyController.swift; sourceTree = "<group>"; };
 		BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayController.swift; sourceTree = "<group>"; };
@@ -161,7 +165,9 @@
 				04DF18BBB699AB5C9E3BC9D4 /* NotchConvertCardController.swift */,
 				A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */,
 				2677DAE2D13A53521E8FD24C /* NowPlayingService.swift */,
+				A8663C5C42551701DD7E367B /* QuickAssistantBackgroundRemover.swift */,
 				DF26F01B227D72879552E9CB /* QuickAssistantFileConverter.swift */,
+				6E633AE018458A94621311E8 /* QuickAssistantImageEnhancer.swift */,
 				D044059359C73F9BF9E8FEAB /* QuickAssistantOutputActions.swift */,
 				C0CAEE5006279529AB173483 /* QuickAssistantService.swift */,
 				66A33D0BDD119232779FB329 /* QuickAssistantWindowController.swift */,
@@ -184,7 +190,7 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_2BE673E5-42F7-45E8-9513-0DB14B71CCCD" /* Resources */ = {
+		"TEMP_24F758EE-B42E-4599-8E42-AAC6463A35EA" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -288,7 +294,9 @@
 				3A2A907D9F47D3D474ECE7A2 /* NotchFileDropController.swift in Sources */,
 				F0FD2E1456383C3FA4BE16F2 /* NowPlayingService.swift in Sources */,
 				524DBEA9A8ED28C04B6EB1E0 /* PlayerViewModel.swift in Sources */,
+				2F90940437D9C9317D9C5517 /* QuickAssistantBackgroundRemover.swift in Sources */,
 				D408DAAB9F020B597DB00EB5 /* QuickAssistantFileConverter.swift in Sources */,
+				4FE7295E5EC67DAADAE32F64 /* QuickAssistantImageEnhancer.swift in Sources */,
 				15FEA84BE1E4EBD68A05FD80 /* QuickAssistantOutputActions.swift in Sources */,
 				4EDE8FDF9E0F7BFCDA5D8F21 /* QuickAssistantService.swift in Sources */,
 				EC6919C9F8DB9882245FA4C2 /* QuickAssistantView.swift in Sources */,

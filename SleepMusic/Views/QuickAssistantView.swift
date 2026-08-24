@@ -66,7 +66,11 @@ struct QuickAssistantView: View {
 
     private var content: some View {
         Group {
-            if viewModel.isWorking || viewModel.isAnalyzingAttachment || viewModel.isConverting {
+            if viewModel.isWorking
+                || viewModel.isAnalyzingAttachment
+                || viewModel.isConverting
+                || viewModel.isRemovingBackground
+                || viewModel.isEnhancingImage {
                 VStack(spacing: 10) {
                     ProgressView().controlSize(.small)
                     Text(activityLabel)
@@ -132,6 +136,36 @@ struct QuickAssistantView: View {
                 attachmentAction("Summarize", icon: "text.alignleft")
                 attachmentAction("Explain", icon: "lightbulb")
                 attachmentAction("Extract", prompt: "Extract text", icon: "text.viewfinder")
+
+                if viewModel.canEnhanceImage || viewModel.canRemoveBackground {
+                    Menu {
+                        if viewModel.canEnhanceImage {
+                            Button {
+                                viewModel.enhanceImageAttachment()
+                            } label: {
+                                Label("Enhance Photo", systemImage: "wand.and.sparkles")
+                            }
+                        }
+                        if viewModel.canRemoveBackground {
+                            Button {
+                                viewModel.removeBackgroundFromAttachment()
+                            } label: {
+                                Label("Remove Background", systemImage: "person.and.background.dotted")
+                            }
+                        }
+                    } label: {
+                        Label("Image", systemImage: "photo")
+                    }
+                    .menuStyle(.button)
+                    .controlSize(.mini)
+                    .disabled(
+                        viewModel.isWorking
+                            || viewModel.isAnalyzingAttachment
+                            || viewModel.isConverting
+                            || viewModel.isRemovingBackground
+                            || viewModel.isEnhancingImage
+                    )
+                }
 
                 Menu {
                     ForEach(viewModel.availableConversionFormats) { format in
@@ -295,6 +329,8 @@ struct QuickAssistantView: View {
                 viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                     || viewModel.isWorking
                     || viewModel.isConverting
+                    || viewModel.isRemovingBackground
+                    || viewModel.isEnhancingImage
                     || viewModel.isAnalyzingAttachment
             )
         }
@@ -309,6 +345,8 @@ struct QuickAssistantView: View {
 
     private var activityLabel: String {
         if viewModel.isAnalyzingAttachment { return "Reading the file…" }
+        if viewModel.isEnhancingImage { return "Enhancing the photo on this Mac…" }
+        if viewModel.isRemovingBackground { return "Removing the background on this Mac…" }
         if viewModel.isConverting { return "Converting the file…" }
         return "Thinking on this Mac…"
     }

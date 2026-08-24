@@ -42,6 +42,8 @@ final class QuickAssistantViewModel: ObservableObject {
     @Published private(set) var attachments: [QuickAssistantAttachment] = []
     @Published private(set) var isAnalyzingAttachment = false
     @Published private(set) var isConverting = false
+    @Published private(set) var isRemovingBackground = false
+    @Published private(set) var isEnhancingImage = false
     @Published private(set) var convertedFiles: [URL] = []
     @Published private(set) var automaticOutputAction: AssistantAutomaticOutputAction = .none
 
@@ -92,6 +94,8 @@ final class QuickAssistantViewModel: ObservableObject {
         requestTask?.cancel()
         isWorking = false
         isConverting = false
+        isRemovingBackground = false
+        isEnhancingImage = false
         isAnalyzingAttachment = true
         attachments = []
         convertedFiles = []
@@ -140,6 +144,8 @@ final class QuickAssistantViewModel: ObservableObject {
         requestTask?.cancel()
         isAnalyzingAttachment = false
         isConverting = false
+        isRemovingBackground = false
+        isEnhancingImage = false
         attachments = []
         convertedFiles = []
         response = ""
@@ -148,7 +154,12 @@ final class QuickAssistantViewModel: ObservableObject {
 
     func submit() {
         let request = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !request.isEmpty, !isWorking, !isConverting, !isAnalyzingAttachment else { return }
+        guard !request.isEmpty,
+              !isWorking,
+              !isConverting,
+              !isRemovingBackground,
+              !isEnhancingImage,
+              !isAnalyzingAttachment else { return }
 
         query = ""
         requestTask?.cancel()
@@ -260,6 +271,124 @@ final class QuickAssistantViewModel: ObservableObject {
         }
     }
 
+    var canRemoveBackground: Bool {
+        guard let first = attachments.first else { return false }
+        return QuickAssistantBackgroundRemover.canProcess(
+            QuickAssistantFileConverter.detectedContentType(for: first.url)
+        )
+    }
+
+    var canEnhanceImage: Bool {
+        guard let first = attachments.first else { return false }
+        return QuickAssistantImageEnhancer.canProcess(
+            QuickAssistantFileConverter.detectedContentType(for: first.url)
+        )
+    }
+
+    func enhanceImageAttachment() {
+        guard let attachment = attachments.first else {
+            response = "Drop an image here first, then I can enhance it."
+            return
+        }
+        guard canEnhanceImage else {
+            response = "Photo enhancement works with image files only."
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.title = "Save Enhanced Photo"
+        panel.prompt = "Enhance"
+        panel.allowedContentTypes = [.jpeg, .png, .tiff]
+        panel.canCreateDirectories = true
+        panel.directoryURL = attachment.url.deletingLastPathComponent()
+        panel.nameFieldStringValue = QuickAssistantImageEnhancer.enhancedFilename(
+            for: attachment.url
+        )
+        guard panel.runModal() == .OK, let destination = panel.url else { return }
+
+        isEnhancingImage = true
+        convertedFiles = []
+        response = "Enhancing \(attachment.name) on this Mac…"
+        let source = attachment.url
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isEnhancingImage = false }
+            do {
+                let output = try await Task.detached(priority: .userInitiated) {
+                    try QuickAssistantImageEnhancer.enhance(
+                        source: source,
+                        destination: destination
+                    )
+                }.value
+                guard !Task.isCancelled else { return }
+                convertedFiles = [output]
+                response = "Enhanced the photo and saved \(output.lastPathComponent)."
+                do {
+                    try await runAutomaticOutputAction()
+                } catch {
+                    response += " Automatic output action failed: \(error.localizedDescription)"
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                response = "Couldn’t enhance the photo. \(error.localizedDescription)"
+            }
+            focusRequest += 1
+        }
+    }
+
+    func removeBackgroundFromAttachment() {
+        guard let attachment = attachments.first else {
+            response = "Drop an image here first, then I can remove its background."
+            return
+        }
+        guard canRemoveBackground else {
+            response = "Removing backgrounds works with image files only."
+            return
+        }
+
+        let panel = NSSavePanel()
+        panel.title = "Save Image Without Background"
+        panel.prompt = "Remove Background"
+        panel.allowedContentTypes = [.png]
+        panel.canCreateDirectories = true
+        panel.directoryURL = attachment.url.deletingLastPathComponent()
+        panel.nameFieldStringValue = attachment.url
+            .deletingPathExtension()
+            .lastPathComponent + "-no-bg.png"
+        guard panel.runModal() == .OK, let destination = panel.url else { return }
+
+        isRemovingBackground = true
+        convertedFiles = []
+        response = "Cutting the subject out of \(attachment.name)…"
+        let source = attachment.url
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isRemovingBackground = false }
+            do {
+                let output = try await Task.detached(priority: .userInitiated) {
+                    try await QuickAssistantBackgroundRemover.removeBackground(
+                        from: source,
+                        destination: destination
+                    )
+                }.value
+                guard !Task.isCancelled else { return }
+                convertedFiles = [output]
+                response = "Removed the background and saved \(output.lastPathComponent)."
+                do {
+                    try await runAutomaticOutputAction()
+                } catch {
+                    response += " Automatic output action failed: \(error.localizedDescription)"
+                }
+            } catch is CancellationError {
+                return
+            } catch {
+                response = "Couldn’t remove the background. \(error.localizedDescription)"
+            }
+            focusRequest += 1
+        }
+    }
+
     func revealConvertedFiles() {
         guard !convertedFiles.isEmpty else { return }
         NSWorkspace.shared.activateFileViewerSelecting(convertedFiles)
@@ -330,6 +459,21 @@ final class QuickAssistantViewModel: ObservableObject {
             return readable.map { "--- \($0.name) ---\n\($0.extractedText)" }.joined(separator: "\n\n")
         }
 
+        if command.contains("background"),
+           ["remove", "erase", "delete", "cut out", "cutout", "get rid", "strip", "transparent", "isolate"]
+               .contains(where: { command.contains($0) }) {
+            removeBackgroundFromAttachment()
+            return response
+        }
+
+        if command.contains("enhance")
+            || command.contains("improve photo")
+            || command.contains("improve image")
+            || command.contains("improve picture") {
+            enhanceImageAttachment()
+            return response
+        }
+
         if command.contains("copy converted") || command == "copy outputs" {
             copyConvertedFiles()
             return response
@@ -381,7 +525,7 @@ final class QuickAssistantViewModel: ObservableObject {
             return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
         }
         if command == "help" || command == "what can you do" {
-            return "Ask a question, drop files to analyze or convert, then copy, compress, rename, or reveal the outputs. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
+            return "Ask a question, drop files to analyze or convert, then copy, compress, rename, or reveal the outputs. For images I can enhance the photo or remove its background. I can summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
         }
         return nil
     }
