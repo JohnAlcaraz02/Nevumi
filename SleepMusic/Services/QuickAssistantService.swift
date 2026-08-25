@@ -44,11 +44,20 @@ final class QuickAssistantViewModel: ObservableObject {
     @Published private(set) var isConverting = false
     @Published private(set) var isRemovingBackground = false
     @Published private(set) var isEnhancingImage = false
+    @Published private(set) var isShowingCalendarComposer = false
+    @Published private(set) var isSavingCalendarEntry = false
+    @Published private(set) var calendarComposerError = ""
+    @Published var calendarEntryTitle = ""
+    @Published var calendarEntryNotes = ""
+    @Published var calendarEntryStartDate = Date()
+    @Published var calendarEntryDurationMinutes = 60
+    @Published var calendarEntryIsAllDay = false
     @Published private(set) var convertedFiles: [URL] = []
     @Published private(set) var automaticOutputAction: AssistantAutomaticOutputAction = .none
 
     private let spotify: SpotifyObserver
     private let lyrics: LyricsViewModel
+    private let calendarService = QuickAssistantCalendarService()
     private var requestTask: Task<Void, Never>?
     private lazy var session = LanguageModelSession(
         instructions: """
@@ -81,6 +90,72 @@ final class QuickAssistantViewModel: ObservableObject {
     func useSuggestion(_ suggestion: String) {
         query = suggestion
         submit()
+    }
+
+    func showCalendarComposer(prefillCommand: String? = nil) {
+        let now = Date().addingTimeInterval(30 * 60)
+        let interval: TimeInterval = 15 * 60
+        calendarEntryStartDate = Date(
+            timeIntervalSince1970: ceil(now.timeIntervalSince1970 / interval) * interval
+        )
+        calendarEntryTitle = ""
+        calendarEntryNotes = ""
+        calendarEntryDurationMinutes = 60
+        calendarEntryIsAllDay = false
+        calendarComposerError = ""
+
+        if let prefillCommand {
+            let prefill = calendarPrefill(from: prefillCommand)
+            calendarEntryTitle = prefill.title
+            if let detectedDate = prefill.date {
+                calendarEntryStartDate = detectedDate
+            }
+        }
+
+        response = ""
+        isShowingCalendarComposer = true
+    }
+
+    func closeCalendarComposer() {
+        guard !isSavingCalendarEntry else { return }
+        isShowingCalendarComposer = false
+        calendarComposerError = ""
+        focusRequest += 1
+    }
+
+    func saveCalendarEntry() {
+        let title = calendarEntryTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else {
+            calendarComposerError = "Add a title for the calendar note."
+            return
+        }
+        guard !isSavingCalendarEntry else { return }
+
+        calendarComposerError = ""
+        isSavingCalendarEntry = true
+        let entry = QuickAssistantCalendarEntry(
+            title: title,
+            notes: calendarEntryNotes.trimmingCharacters(in: .whitespacesAndNewlines),
+            startDate: calendarEntryStartDate,
+            durationMinutes: calendarEntryDurationMinutes,
+            isAllDay: calendarEntryIsAllDay
+        )
+
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let calendarName = try await calendarService.add(entry)
+                let dateDescription = entry.isAllDay
+                    ? entry.startDate.formatted(date: .abbreviated, time: .omitted)
+                    : entry.startDate.formatted(date: .abbreviated, time: .shortened)
+                response = "Added “\(entry.title)” to \(calendarName) for \(dateDescription)."
+                isShowingCalendarComposer = false
+                focusRequest += 1
+            } catch {
+                calendarComposerError = error.localizedDescription
+            }
+            isSavingCalendarEntry = false
+        }
     }
 
     func attachFile(_ url: URL) {
@@ -159,6 +234,7 @@ final class QuickAssistantViewModel: ObservableObject {
               !isConverting,
               !isRemovingBackground,
               !isEnhancingImage,
+              !isSavingCalendarEntry,
               !isAnalyzingAttachment else { return }
 
         query = ""
@@ -283,6 +359,33 @@ final class QuickAssistantViewModel: ObservableObject {
         return QuickAssistantImageEnhancer.canProcess(
             QuickAssistantFileConverter.detectedContentType(for: first.url)
         )
+    }
+
+    var canEditImage: Bool { canEnhanceImage }
+
+    func editImageAttachment() {
+        guard let attachment = attachments.first else {
+            response = "Drop an image here first, then I can open the editor."
+            return
+        }
+        guard canEditImage else {
+            response = "The image editor works with image files only."
+            return
+        }
+
+        do {
+            try QuickAssistantImageEditorController.shared.present(
+                source: attachment.url
+            ) { [weak self] output in
+                guard let self else { return }
+                convertedFiles = [output]
+                response = "Saved the edited image as \(output.lastPathComponent)."
+                focusRequest += 1
+            }
+            response = "Opened \(attachment.name) in the offline image editor."
+        } catch {
+            response = "Couldn’t open the image editor. \(error.localizedDescription)"
+        }
     }
 
     func enhanceImageAttachment() {
@@ -452,6 +555,13 @@ final class QuickAssistantViewModel: ObservableObject {
     private func performLocalCommand(_ request: String) -> String? {
         let command = request.lowercased().trimmingCharacters(in: .punctuationCharacters)
 
+        if command.contains("calendar"),
+           ["add", "create", "save", "put", "schedule", "note", "event"]
+               .contains(where: { command.contains($0) }) {
+            showCalendarComposer(prefillCommand: request)
+            return ""
+        }
+
         if command.contains("extract text") || command == "show text" {
             guard !attachments.isEmpty else { return "Drop a PDF, image, or text file here first." }
             let readable = attachments.filter(\.hasReadableText)
@@ -471,6 +581,27 @@ final class QuickAssistantViewModel: ObservableObject {
             || command.contains("improve image")
             || command.contains("improve picture") {
             enhanceImageAttachment()
+            return response
+        }
+
+        if command.contains("edit image")
+            || command.contains("edit photo")
+            || command.contains("image editor")
+            || command.contains("photo editor")
+            || command.contains("erase object")
+            || command.contains("remove object")
+            || command.contains("delete object")
+            || command.contains("erase thing")
+            || command.contains("remove thing")
+            || command.contains("delete thing")
+            || command.contains("erase something")
+            || command.contains("remove something")
+            || command.contains("delete something")
+            || command.contains("replace background")
+            || command.contains("change background")
+            || command.contains("edit background")
+            || command.contains("edit bg") {
+            editImageAttachment()
             return response
         }
 
@@ -525,9 +656,62 @@ final class QuickAssistantViewModel: ObservableObject {
             return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
         }
         if command == "help" || command == "what can you do" {
-            return "Ask a question, drop files to analyze or convert, then copy, compress, rename, or reveal the outputs. For images I can enhance the photo or remove its background. I can summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
+            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can open an offline editor, enhance the photo, erase objects, replace or remove the background. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
         }
         return nil
+    }
+
+    private func calendarPrefill(from command: String) -> (title: String, date: Date?) {
+        var title = command
+        var detectedDate: Date?
+        if let detector = try? NSDataDetector(
+            types: NSTextCheckingResult.CheckingType.date.rawValue
+        ) {
+            let fullRange = NSRange(title.startIndex..., in: title)
+            if let result = detector.firstMatch(
+                in: title,
+                options: [],
+                range: fullRange
+            ), let date = result.date {
+                detectedDate = date
+                title = (title as NSString).replacingCharacters(in: result.range, with: "")
+            }
+        }
+
+        let cleanupPatterns = [
+            #"(?i)^\s*calendar\s+(note|event)\s*[:\-]?\s*"#,
+            #"(?i)^\s*(add|create|save|put|schedule)\s+"#,
+            #"(?i)\s+(to|in|on)\s+(my\s+)?calendar\s*$"#,
+            #"(?i)^\s*(a|an)\s+"#,
+        ]
+        for pattern in cleanupPatterns {
+            title = title.replacingOccurrences(
+                of: pattern,
+                with: "",
+                options: .regularExpression
+            )
+        }
+        title = title.replacingOccurrences(
+            of: #"\s+"#,
+            with: " ",
+            options: .regularExpression
+        ).trimmingCharacters(in: .whitespacesAndNewlines.union(.punctuationCharacters))
+        if [
+            "calendar note",
+            "calendar event",
+            "to calendar",
+            "to my calendar",
+            "note",
+            "event",
+        ].contains(title.lowercased()) {
+            title = ""
+        }
+
+        if let date = detectedDate, date < Date().addingTimeInterval(-60),
+           let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: date) {
+            detectedDate = tomorrow
+        }
+        return (title, detectedDate)
     }
 
     private func handleConversionCommand(_ request: String) -> Bool {

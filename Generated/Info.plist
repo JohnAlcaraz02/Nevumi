@@ -24,6 +24,8 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Sleep Music reads the currently playing track from Spotify to show it as Now Playing.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Sleep Music adds the calendar notes and events you create in Quick Assistant.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Personal use only</string>
 </dict>

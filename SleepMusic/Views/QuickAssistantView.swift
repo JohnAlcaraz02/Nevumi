@@ -5,13 +5,17 @@ import UniformTypeIdentifiers
 struct QuickAssistantView: View {
     @ObservedObject var viewModel: QuickAssistantViewModel
     let onClose: () -> Void
+    let onHeightChange: (CGFloat) -> Void
 
     @FocusState private var isInputFocused: Bool
+    @FocusState private var isCalendarTitleFocused: Bool
     @State private var isFileTargeted = false
+    @State private var isCalendarButtonHovered = false
+    @State private var isCloseButtonHovered = false
 
     private let suggestions = [
         "What song is playing?",
-        "Summarize my clipboard",
+        "Add calendar note",
         "Enter Sleep Mode",
     ]
 
@@ -19,22 +23,38 @@ struct QuickAssistantView: View {
         VStack(spacing: 0) {
             header
             Divider().overlay(.white.opacity(0.08))
-            if let attachment = viewModel.attachment {
+            if let attachment = viewModel.attachment,
+               !viewModel.isShowingCalendarComposer {
                 attachmentBar(attachment)
             }
             content
-            inputBar
+            if !viewModel.isShowingCalendarComposer {
+                inputBar
+            }
         }
-        .frame(width: 540, height: 390)
+        .frame(width: 540, height: panelHeight)
         .background(.ultraThinMaterial)
         .background(Color.black.opacity(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .strokeBorder(.white.opacity(0.12), lineWidth: 1)
+                .allowsHitTesting(false)
         }
-        .onAppear { focusInput() }
+        .onAppear {
+            onHeightChange(panelHeight)
+            focusInput()
+        }
         .onChange(of: viewModel.focusRequest) { _, _ in focusInput() }
+        .onChange(of: viewModel.isShowingCalendarComposer) { _, isShowing in
+            onHeightChange(isShowing ? 318 : 390)
+            if isShowing {
+                isInputFocused = false
+                DispatchQueue.main.async { isCalendarTitleFocused = true }
+            } else {
+                focusInput()
+            }
+        }
         .overlay {
             if isFileTargeted { fileDropOverlay }
         }
@@ -54,11 +74,38 @@ struct QuickAssistantView: View {
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(.white.opacity(0.07), in: Capsule())
-            Button(action: onClose) {
-                Image(systemName: "xmark")
+            Button {
+                viewModel.showCalendarComposer()
+            } label: {
+                Image(systemName: "calendar.badge.plus")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        isCalendarButtonHovered ? .white.opacity(0.08) : .clear,
+                        in: Circle()
+                    )
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
+            .help("Add a calendar note")
+            .accessibilityLabel("Add a calendar note")
+            .onHover { isCalendarButtonHovered = $0 }
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        isCloseButtonHovered ? .white.opacity(0.08) : .clear,
+                        in: Circle()
+                    )
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .help("Close Quick Assistant")
+            .accessibilityLabel("Close Quick Assistant")
+            .onHover { isCloseButtonHovered = $0 }
         }
         .padding(.horizontal, 18)
         .frame(height: 48)
@@ -66,7 +113,9 @@ struct QuickAssistantView: View {
 
     private var content: some View {
         Group {
-            if viewModel.isWorking
+            if viewModel.isShowingCalendarComposer {
+                calendarComposer
+            } else if viewModel.isWorking
                 || viewModel.isAnalyzingAttachment
                 || viewModel.isConverting
                 || viewModel.isRemovingBackground
@@ -108,6 +157,113 @@ struct QuickAssistantView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    private var calendarComposer: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Image(systemName: "calendar.badge.plus")
+                    .foregroundStyle(.indigo)
+                    .font(.system(size: 14, weight: .semibold))
+                    .frame(width: 28, height: 28)
+                    .background(Color.indigo.opacity(0.14), in: Circle())
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("New calendar note")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    Text("Saves to your default calendar")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            VStack(spacing: 9) {
+                TextField("What’s happening?", text: $viewModel.calendarEntryTitle)
+                    .textFieldStyle(.roundedBorder)
+                    .focused($isCalendarTitleFocused)
+                    .onSubmit(viewModel.saveCalendarEntry)
+
+                TextField("Add a note (optional)", text: $viewModel.calendarEntryNotes)
+                    .textFieldStyle(.roundedBorder)
+
+                Divider().overlay(.white.opacity(0.06))
+
+                HStack(spacing: 10) {
+                    Label("When", systemImage: "clock")
+                        .frame(width: 62, alignment: .leading)
+                        .foregroundStyle(.secondary)
+                    DatePicker(
+                        "",
+                        selection: $viewModel.calendarEntryStartDate,
+                        displayedComponents: viewModel.calendarEntryIsAllDay
+                            ? [.date]
+                            : [.date, .hourAndMinute]
+                    )
+                    .labelsHidden()
+                    Spacer(minLength: 4)
+                    Toggle("All day", isOn: $viewModel.calendarEntryIsAllDay)
+                        .toggleStyle(.checkbox)
+                }
+
+                if !viewModel.calendarEntryIsAllDay {
+                    HStack(spacing: 10) {
+                        Label("Length", systemImage: "timer")
+                            .frame(width: 62, alignment: .leading)
+                            .foregroundStyle(.secondary)
+                        Picker(
+                            "",
+                            selection: $viewModel.calendarEntryDurationMinutes
+                        ) {
+                            Text("15m").tag(15)
+                            Text("30m").tag(30)
+                            Text("1h").tag(60)
+                            Text("2h").tag(120)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                    }
+                }
+            }
+            .font(.system(size: 12))
+            .padding(10)
+            .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .strokeBorder(.white.opacity(0.07), lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
+
+            if !viewModel.calendarComposerError.isEmpty {
+                Label(viewModel.calendarComposerError, systemImage: "exclamationmark.circle.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.red)
+                    .lineLimit(2)
+            }
+
+            HStack(spacing: 8) {
+                Label("Write-only access", systemImage: "lock.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+                Spacer(minLength: 8)
+                Button("Cancel", action: viewModel.closeCalendarComposer)
+                    .disabled(viewModel.isSavingCalendarEntry)
+                Button(action: viewModel.saveCalendarEntry) {
+                    HStack(spacing: 6) {
+                        if viewModel.isSavingCalendarEntry {
+                            ProgressView().controlSize(.small)
+                        }
+                        Text(viewModel.isSavingCalendarEntry ? "Adding…" : "Add to Calendar")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(viewModel.isSavingCalendarEntry)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private var panelHeight: CGFloat {
+        viewModel.isShowingCalendarComposer ? 318 : 390
+    }
+
     private func attachmentBar(_ attachment: QuickAssistantAttachment) -> some View {
         VStack(spacing: 10) {
             HStack(spacing: 9) {
@@ -139,6 +295,14 @@ struct QuickAssistantView: View {
 
                 if viewModel.canEnhanceImage || viewModel.canRemoveBackground {
                     Menu {
+                        if viewModel.canEditImage {
+                            Button {
+                                viewModel.editImageAttachment()
+                            } label: {
+                                Label("Open Image Editor…", systemImage: "slider.horizontal.3")
+                            }
+                            Divider()
+                        }
                         if viewModel.canEnhanceImage {
                             Button {
                                 viewModel.enhanceImageAttachment()
@@ -340,7 +504,11 @@ struct QuickAssistantView: View {
     }
 
     private func focusInput() {
-        DispatchQueue.main.async { isInputFocused = true }
+        guard !viewModel.isShowingCalendarComposer else { return }
+        DispatchQueue.main.async {
+            isCalendarTitleFocused = false
+            isInputFocused = true
+        }
     }
 
     private var activityLabel: String {

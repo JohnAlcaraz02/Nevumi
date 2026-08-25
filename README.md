@@ -81,6 +81,12 @@ Examples:
 
 Clipboard content is limited to the first 8,000 characters and is only read when explicitly requested.
 
+### Calendar notes
+
+Click the calendar button in Quick Assistant, choose **Add calendar note**, or type a command such as `add dentist appointment to my calendar tomorrow at 3 PM`. Review the title, optional notes, date, time, all-day setting, and duration before saving to the default macOS calendar.
+
+Calendar access is requested only when the first entry is saved. SleepMusic requests write-only access and cannot read existing calendar events. Creating entries works offline when the destination calendar is stored locally; cloud calendars sync when their service is available.
+
 ### Intelligent file drop
 
 Open Quick Assistant, then drag one or more supported files anywhere onto its card. The assistant remains visible while Finder is active. You can also click the paperclip button and choose multiple files manually.
@@ -105,9 +111,10 @@ After analysis, the attached-file toolbar provides these actions:
 | **Suggest a filename** | Suggests a descriptive filename based on the content |
 | **Enhance Photo** | Improves tone, color, noise, and detail locally while keeping the original untouched |
 | **Remove Background** | Isolates the foreground subject and saves it on a transparent background |
+| **Open Image Editor** | Erases or restores selected areas and replaces the background with transparency, a color, or blur |
 | **Convert** | Converts the attachment to a compatible output format and saves it where you choose |
 
-For an attached image, choose **Image → Enhance Photo** or type `enhance photo`.
+For an attached image, open the **Image** menu. Choose **Open Image Editor** (or type `edit image`) for background and object edits, or choose **Enhance Photo** (or type `enhance photo`) for an automatic cleanup. The editor and its automatic foreground detection work entirely on-device.
 
 Conversion formats:
 
@@ -202,6 +209,7 @@ Press any key or click to dismiss Sleep Mode.
 ## Privacy and permissions
 
 - Spotify control uses Apple Events and requires macOS Automation permission.
+- Calendar notes use write-only EventKit access and cannot read existing events.
 - General assistant responses use Apple's on-device model when available.
 - Clipboard text is read only for assistant requests that mention `clipboard`.
 - Lyrics and artwork require network access.

@@ -68,7 +68,13 @@ final class QuickAssistantWindowController: NSObject, NSWindowDelegate {
         panel.level = .statusBar
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panel.contentView = NSHostingView(
-            rootView: QuickAssistantView(viewModel: viewModel, onClose: { [weak self] in self?.hide() })
+            rootView: QuickAssistantView(
+                viewModel: viewModel,
+                onClose: { [weak self] in self?.hide() },
+                onHeightChange: { [weak self] height in
+                    self?.resizePanel(to: height)
+                }
+            )
         )
         panel.delegate = self
         self.panel = panel
@@ -82,6 +88,15 @@ final class QuickAssistantWindowController: NSObject, NSWindowDelegate {
             x: screen.frame.midX - frame.width / 2,
             y: screen.visibleFrame.maxY - frame.height - 10
         ))
+    }
+
+    private func resizePanel(to height: CGFloat) {
+        guard let panel, abs(panel.frame.height - height) > 0.5 else { return }
+        var frame = panel.frame
+        let topEdge = frame.maxY
+        frame.size.height = height
+        frame.origin.y = topEdge - height
+        panel.setFrame(frame, display: true, animate: panel.isVisible)
     }
 
     private func installEscapeMonitor() {

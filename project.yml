@@ -33,6 +33,7 @@ targets:
         CFBundleDisplayName: Sleep Music
         NSHumanReadableCopyright: "Personal use only"
         NSAppleEventsUsageDescription: "Sleep Music reads the currently playing track from Spotify to show it as Now Playing."
+        NSCalendarsWriteOnlyAccessUsageDescription: "Sleep Music adds the calendar notes and events you create in Quick Assistant."
         LSUIElement: true
     entitlements:
       path: Generated/SleepMusic.entitlements

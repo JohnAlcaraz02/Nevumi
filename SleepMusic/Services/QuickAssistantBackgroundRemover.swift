@@ -53,6 +53,30 @@ enum QuickAssistantBackgroundRemover {
         return destination
     }
 
+    /// Returns a full-resolution grayscale mask where white pixels are
+    /// foreground and black pixels are background. The editor uses this as a
+    /// starting point that the user can refine with erase and restore brushes.
+    static func foregroundMask(for image: CGImage) async throws -> CGImage {
+        let request = GenerateForegroundInstanceMaskRequest()
+        guard let observation = try await request.perform(on: image) else {
+            throw RemovalError.noSubjectFound
+        }
+        let instances = observation.allInstances
+        guard !instances.isEmpty else { throw RemovalError.noSubjectFound }
+
+        let handler = ImageRequestHandler(image)
+        let maskBuffer = try observation.generateScaledMask(
+            for: instances,
+            scaledToImageFrom: handler
+        )
+        let maskImage = CIImage(cvPixelBuffer: maskBuffer)
+        let context = CIContext(options: [.cacheIntermediates: false])
+        guard let output = context.createCGImage(maskImage, from: maskImage.extent) else {
+            throw RemovalError.encodingFailed
+        }
+        return output
+    }
+
     enum RemovalError: LocalizedError {
         case unreadableImage
         case noSubjectFound
