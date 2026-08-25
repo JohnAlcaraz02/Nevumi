@@ -11,6 +11,7 @@ struct QuickAssistantView: View {
     @FocusState private var isCalendarTitleFocused: Bool
     @State private var isFileTargeted = false
     @State private var isCalendarButtonHovered = false
+    @State private var isConversationMenuHovered = false
     @State private var isCloseButtonHovered = false
 
     private let suggestions = [
@@ -91,6 +92,44 @@ struct QuickAssistantView: View {
             .help("Add a calendar note")
             .accessibilityLabel("Add a calendar note")
             .onHover { isCalendarButtonHovered = $0 }
+            Menu {
+                Button {
+                    viewModel.startNewConversation()
+                } label: {
+                    Label("New Conversation", systemImage: "square.and.pencil")
+                }
+                .disabled(!viewModel.canStartNewConversation)
+
+                Divider()
+
+                Button {
+                    viewModel.setConversationHistoryEnabled(
+                        !viewModel.savesConversationHistory
+                    )
+                } label: {
+                    if viewModel.savesConversationHistory {
+                        Label("Keep History on This Mac", systemImage: "checkmark")
+                    } else {
+                        Text("Keep History on This Mac")
+                    }
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 13, weight: .semibold))
+                    .frame(width: 30, height: 30)
+                    .background(
+                        isConversationMenuHovered ? .white.opacity(0.08) : .clear,
+                        in: Circle()
+                    )
+                    .contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .foregroundStyle(.secondary)
+            .help("Conversation options")
+            .accessibilityLabel("Conversation options")
+            .onHover { isConversationMenuHovered = $0 }
             Button(action: onClose) {
                 Image(systemName: "xmark")
                     .font(.system(size: 13, weight: .semibold))
@@ -115,26 +154,8 @@ struct QuickAssistantView: View {
         Group {
             if viewModel.isShowingCalendarComposer {
                 calendarComposer
-            } else if viewModel.isWorking
-                || viewModel.isAnalyzingAttachment
-                || viewModel.isConverting
-                || viewModel.isRemovingBackground
-                || viewModel.isEnhancingImage {
-                VStack(spacing: 10) {
-                    ProgressView().controlSize(.small)
-                    Text(activityLabel)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                }
-            } else if !viewModel.response.isEmpty {
-                ScrollView {
-                    Text(viewModel.response)
-                        .font(.system(size: 14, design: .rounded))
-                        .foregroundStyle(.primary.opacity(0.9))
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(18)
-                }
+            } else if !viewModel.messages.isEmpty || isAssistantBusy {
+                conversation
             } else {
                 VStack(spacing: 14) {
                     Text("What can I help you with?")
@@ -155,6 +176,185 @@ struct QuickAssistantView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var conversation: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(viewModel.messages) { message in
+                        messageRow(message)
+                            .id(message.id.uuidString)
+                    }
+
+                    if isAssistantBusy {
+                        activityRow
+                            .id("assistant-activity")
+                    }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+            }
+            .onAppear {
+                scrollConversationToBottom(using: proxy, animated: false)
+            }
+            .onChange(of: viewModel.messages.last?.id) { _, _ in
+                scrollConversationToBottom(using: proxy)
+            }
+            .onChange(of: isAssistantBusy) { _, _ in
+                scrollConversationToBottom(using: proxy)
+            }
+        }
+    }
+
+    private func messageRow(_ message: QuickAssistantMessage) -> some View {
+        let isUser = message.role == .user
+        let isLatest = viewModel.messages.last?.id == message.id
+
+        return HStack(alignment: .bottom, spacing: 8) {
+            if isUser { Spacer(minLength: 62) }
+
+            if !isUser {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.indigo)
+                    .frame(width: 24, height: 24)
+                    .background(Color.indigo.opacity(0.13), in: Circle())
+            }
+
+            VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
+                Text(message.text)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundStyle(isUser ? Color.white : Color.primary.opacity(0.92))
+                    .textSelection(.enabled)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(
+                        isUser ? Color.indigo : Color.white.opacity(0.075),
+                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    )
+
+                if !message.context.isEmpty {
+                    contextChips(message.context)
+                }
+
+                if !isUser {
+                    messageActions(message, isLatest: isLatest)
+                }
+            }
+
+            if !isUser { Spacer(minLength: 38) }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func contextChips(_ context: [QuickAssistantContextChip]) -> some View {
+        HStack(spacing: 5) {
+            ForEach(context.prefix(3)) { item in
+                Label(item.label, systemImage: item.systemImage)
+                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .lineLimit(1)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 4)
+                    .background(.white.opacity(0.055), in: Capsule())
+            }
+        }
+        .foregroundStyle(.secondary)
+    }
+
+    private func messageActions(
+        _ message: QuickAssistantMessage,
+        isLatest: Bool
+    ) -> some View {
+        HStack(spacing: 7) {
+            Button {
+                viewModel.copyMessage(message)
+            } label: {
+                Image(systemName: "doc.on.doc")
+            }
+            .help("Copy response")
+
+            Button {
+                viewModel.saveMessage(message)
+            } label: {
+                Image(systemName: "square.and.arrow.down")
+            }
+            .help("Save response")
+
+            ShareLink(item: message.text) {
+                Image(systemName: "square.and.arrow.up")
+            }
+            .help("Share response")
+
+            if viewModel.canRetry(message) {
+                Button {
+                    viewModel.retryLastResponse()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .help("Retry response")
+            }
+
+            if isLatest && message.allowsRetry {
+                Divider().frame(height: 12)
+                Button("Shorter") {
+                    viewModel.useSuggestion("Make that shorter")
+                }
+                Button("More detail") {
+                    viewModel.useSuggestion("Give me more detail")
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .font(.system(size: 10, weight: .medium, design: .rounded))
+        .foregroundStyle(.secondary)
+    }
+
+    private var activityRow: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "sparkles")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.indigo)
+                .frame(width: 24, height: 24)
+                .background(Color.indigo.opacity(0.13), in: Circle())
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text(activityLabel)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 11)
+            .padding(.vertical, 8)
+            .background(.white.opacity(0.06), in: Capsule())
+            Spacer()
+        }
+    }
+
+    private var isAssistantBusy: Bool {
+        viewModel.isWorking
+            || viewModel.isAnalyzingAttachment
+            || viewModel.isConverting
+            || viewModel.isRemovingBackground
+            || viewModel.isEnhancingImage
+    }
+
+    private func scrollConversationToBottom(
+        using proxy: ScrollViewProxy,
+        animated: Bool = true
+    ) {
+        let target = isAssistantBusy
+            ? "assistant-activity"
+            : viewModel.messages.last?.id.uuidString
+        guard let target else { return }
+        DispatchQueue.main.async {
+            if animated {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    proxy.scrollTo(target, anchor: .bottom)
+                }
+            } else {
+                proxy.scrollTo(target, anchor: .bottom)
+            }
+        }
     }
 
     private var calendarComposer: some View {

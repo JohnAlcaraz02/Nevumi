@@ -15,6 +15,48 @@ struct QuickAssistantAttachment: Identifiable, Equatable {
     var hasReadableText: Bool { !extractedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 }
 
+enum QuickAssistantMessageRole: String, Codable {
+    case user
+    case assistant
+}
+
+struct QuickAssistantContextChip: Identifiable, Codable, Equatable {
+    let id: UUID
+    let label: String
+    let systemImage: String
+
+    init(id: UUID = UUID(), label: String, systemImage: String) {
+        self.id = id
+        self.label = label
+        self.systemImage = systemImage
+    }
+}
+
+struct QuickAssistantMessage: Identifiable, Codable, Equatable {
+    let id: UUID
+    let role: QuickAssistantMessageRole
+    var text: String
+    let createdAt: Date
+    var context: [QuickAssistantContextChip]
+    var allowsRetry: Bool
+
+    init(
+        id: UUID = UUID(),
+        role: QuickAssistantMessageRole,
+        text: String,
+        createdAt: Date = Date(),
+        context: [QuickAssistantContextChip] = [],
+        allowsRetry: Bool = false
+    ) {
+        self.id = id
+        self.role = role
+        self.text = text
+        self.createdAt = createdAt
+        self.context = context
+        self.allowsRetry = allowsRetry
+    }
+}
+
 enum AssistantAutomaticOutputAction: String, CaseIterable, Identifiable {
     case none
     case reveal
@@ -37,6 +79,8 @@ enum AssistantAutomaticOutputAction: String, CaseIterable, Identifiable {
 final class QuickAssistantViewModel: ObservableObject {
     @Published var query = ""
     @Published private(set) var response = ""
+    @Published private(set) var messages: [QuickAssistantMessage] = []
+    @Published private(set) var savesConversationHistory = false
     @Published private(set) var isWorking = false
     @Published private(set) var focusRequest = 0
     @Published private(set) var attachments: [QuickAssistantAttachment] = []
@@ -59,21 +103,32 @@ final class QuickAssistantViewModel: ObservableObject {
     private let lyrics: LyricsViewModel
     private let calendarService = QuickAssistantCalendarService()
     private var requestTask: Task<Void, Never>?
-    private lazy var session = LanguageModelSession(
-        instructions: """
-        You are the concise personal assistant inside a small Mac notch panel.
-        Answer in plain text using at most four short sentences unless the user
-        explicitly asks for detail. Never claim that you performed an action.
-        Music and Sleep Mode actions are handled separately by the app.
-        """
-    )
+    private static let historyEnabledKey = "assistantSavesConversationHistory"
+    private static let savedMessagesKey = "assistantConversationMessages"
+    private static let maximumSavedMessages = 100
+    private static let maximumSavedMessageCharacters = 20_000
+    private static let maximumTranscriptCharacters = 6_000
+    private static let modelInstructions = """
+    You are the concise personal assistant inside a small Mac notch panel.
+    Answer in plain text using at most four short sentences unless the user
+    explicitly asks for detail. Never claim that you performed an action.
+    Music and Sleep Mode actions are handled separately by the app.
+    """
 
     init(spotify: SpotifyObserver, lyrics: LyricsViewModel) {
         self.spotify = spotify
         self.lyrics = lyrics
-        if let stored = UserDefaults.standard.string(forKey: "assistantAutomaticOutputAction"),
+        let defaults = UserDefaults.standard
+        if let stored = defaults.string(forKey: "assistantAutomaticOutputAction"),
            let action = AssistantAutomaticOutputAction(rawValue: stored) {
             automaticOutputAction = action
+        }
+        savesConversationHistory = defaults.bool(forKey: Self.historyEnabledKey)
+        if savesConversationHistory,
+           let data = defaults.data(forKey: Self.savedMessagesKey),
+           let saved = try? JSONDecoder().decode([QuickAssistantMessage].self, from: data) {
+            messages = Array(saved.suffix(Self.maximumSavedMessages))
+            response = messages.last(where: { $0.role == .assistant })?.text ?? ""
         }
     }
 
@@ -85,6 +140,92 @@ final class QuickAssistantViewModel: ObservableObject {
 
     func prepareForPresentation() {
         focusRequest += 1
+    }
+
+    func startNewConversation() {
+        requestTask?.cancel()
+        requestTask = nil
+        isWorking = false
+        isAnalyzingAttachment = false
+        isConverting = false
+        isRemovingBackground = false
+        isEnhancingImage = false
+        isShowingCalendarComposer = false
+        isSavingCalendarEntry = false
+        calendarComposerError = ""
+        attachments = []
+        convertedFiles = []
+        query = ""
+        response = ""
+        messages = []
+        persistMessages()
+        focusRequest += 1
+    }
+
+    func setConversationHistoryEnabled(_ isEnabled: Bool) {
+        savesConversationHistory = isEnabled
+        UserDefaults.standard.set(isEnabled, forKey: Self.historyEnabledKey)
+        if isEnabled {
+            persistMessages()
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.savedMessagesKey)
+        }
+    }
+
+    func copyMessage(_ message: QuickAssistantMessage) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(message.text, forType: .string)
+    }
+
+    func saveMessage(_ message: QuickAssistantMessage) {
+        let panel = NSSavePanel()
+        panel.title = "Save Assistant Response"
+        panel.prompt = "Save"
+        panel.allowedContentTypes = [.plainText]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = "SleepMusic Response.txt"
+        guard panel.runModal() == .OK, let destination = panel.url else { return }
+
+        do {
+            try Data(message.text.utf8).write(to: destination, options: .atomic)
+        } catch {
+            presentResponse("I couldn’t save that response. \(error.localizedDescription)")
+        }
+    }
+
+    func canRetry(_ message: QuickAssistantMessage) -> Bool {
+        !isBusy && messages.last?.id == message.id && message.allowsRetry
+    }
+
+    var canStartNewConversation: Bool {
+        !isBusy && (!messages.isEmpty || !attachments.isEmpty)
+    }
+
+    func retryLastResponse() {
+        guard let assistantIndex = messages.indices.last,
+              messages[assistantIndex].role == .assistant,
+              messages[assistantIndex].allowsRetry,
+              !isBusy,
+              let userIndex = messages[..<assistantIndex].lastIndex(where: { $0.role == .user })
+        else { return }
+
+        let request = messages[userIndex].text
+        let history = Array(messages[..<userIndex])
+        requestModelResponse(
+            for: request,
+            history: history,
+            replacing: messages[assistantIndex].id
+        )
+    }
+
+    private var isBusy: Bool {
+        isWorking
+            || isAnalyzingAttachment
+            || isConverting
+            || isRemovingBackground
+            || isEnhancingImage
+            || isSavingCalendarEntry
     }
 
     func useSuggestion(_ suggestion: String) {
@@ -148,7 +289,7 @@ final class QuickAssistantViewModel: ObservableObject {
                 let dateDescription = entry.isAllDay
                     ? entry.startDate.formatted(date: .abbreviated, time: .omitted)
                     : entry.startDate.formatted(date: .abbreviated, time: .shortened)
-                response = "Added “\(entry.title)” to \(calendarName) for \(dateDescription)."
+                presentResponse("Added “\(entry.title)” to \(calendarName) for \(dateDescription).")
                 isShowingCalendarComposer = false
                 focusRequest += 1
             } catch {
@@ -196,19 +337,30 @@ final class QuickAssistantViewModel: ObservableObject {
 
             attachments = analyzedFiles
             if analyzedFiles.isEmpty {
-                response = "I couldn’t attach those files. \(failures.first ?? "No supported files were found.")"
+                presentResponse("I couldn’t attach those files. \(failures.first ?? "No supported files were found.")")
             } else if analyzedFiles.count == 1 {
                 let analyzed = analyzedFiles[0]
                 if QuickAssistantFileConverter.detectedContentType(for: analyzed.url)?.conforms(to: .audio) == true {
-                    response = "\(analyzed.name) is ready. Choose WAV, AIFF, or CAF from Convert."
+                    presentResponse(
+                        "\(analyzed.name) is ready. Choose WAV, AIFF, or CAF from Convert.",
+                        context: [.init(label: analyzed.name, systemImage: "paperclip")]
+                    )
                 } else {
-                    response = analyzed.hasReadableText
-                        ? "\(analyzed.name) is ready. Ask a question or choose an action below."
-                        : "I attached \(analyzed.name), but couldn’t find readable text in it."
+                    presentResponse(
+                        analyzed.hasReadableText
+                            ? "\(analyzed.name) is ready. Ask a question or choose an action below."
+                            : "I attached \(analyzed.name), but couldn’t find readable text in it.",
+                        context: [.init(label: analyzed.name, systemImage: "paperclip")]
+                    )
                 }
             } else {
                 let skipped = failures.isEmpty ? "" : " \(failures.count) unsupported file(s) were skipped."
-                response = "\(analyzedFiles.count) files are ready for analysis or batch conversion.\(skipped)"
+                presentResponse(
+                    "\(analyzedFiles.count) files are ready for analysis or batch conversion.\(skipped)",
+                    context: analyzedFiles.prefix(3).map {
+                        .init(label: $0.name, systemImage: "paperclip")
+                    }
+                )
             }
             isAnalyzingAttachment = false
             focusRequest += 1
@@ -239,35 +391,24 @@ final class QuickAssistantViewModel: ObservableObject {
 
         query = ""
         requestTask?.cancel()
+        let history = messages
+        appendMessage(role: .user, text: request)
 
         if handleConversionCommand(request) { return }
 
         if let localResponse = performLocalCommand(request) {
-            response = localResponse
+            if !isBusy {
+                presentResponse(localResponse)
+            }
             return
         }
 
         guard SystemLanguageModel.default.isAvailable else {
-            response = "Apple Intelligence is unavailable on this Mac. You can still say “play or pause,” “next song,” “previous song,” “what song is playing,” or “enter sleep mode.”"
+            presentResponse("Apple Intelligence is unavailable on this Mac. You can still say “play or pause,” “next song,” “previous song,” “what song is playing,” or “enter sleep mode.”")
             return
         }
 
-        isWorking = true
-        response = ""
-        let prompt = contextualPrompt(for: request)
-        requestTask = Task { [weak self] in
-            guard let self else { return }
-            do {
-                let result = try await session.respond(to: prompt)
-                guard !Task.isCancelled else { return }
-                response = result.content.trimmingCharacters(in: .whitespacesAndNewlines)
-            } catch is CancellationError {
-                return
-            } catch {
-                response = "I couldn’t answer that right now. \(error.localizedDescription)"
-            }
-            isWorking = false
-        }
+        requestModelResponse(for: request, history: history)
     }
 
     var availableConversionFormats: [AssistantConversionFormat] {
@@ -282,11 +423,11 @@ final class QuickAssistantViewModel: ObservableObject {
 
     func convertAttachment(to format: AssistantConversionFormat) {
         guard let attachment = attachments.first else {
-            response = "Attach a file before converting it."
+            presentResponse("Attach a file before converting it.")
             return
         }
         guard availableConversionFormats.contains(format) else {
-            response = "\(format.displayName) isn’t available for this file type."
+            presentResponse("\(format.displayName) isn’t available for this file type.")
             return
         }
         let destination: URL?
@@ -338,10 +479,11 @@ final class QuickAssistantViewModel: ObservableObject {
                 } catch {
                     response += " Automatic output action failed: \(error.localizedDescription)"
                 }
+                presentResponse(response)
             } catch is CancellationError {
                 return
             } catch {
-                response = "Conversion failed. \(error.localizedDescription)"
+                presentResponse("Conversion failed. \(error.localizedDescription)")
             }
             focusRequest += 1
         }
@@ -365,11 +507,11 @@ final class QuickAssistantViewModel: ObservableObject {
 
     func editImageAttachment() {
         guard let attachment = attachments.first else {
-            response = "Drop an image here first, then I can open the editor."
+            presentResponse("Drop an image here first, then I can open the editor.")
             return
         }
         guard canEditImage else {
-            response = "The image editor works with image files only."
+            presentResponse("The image editor works with image files only.")
             return
         }
 
@@ -379,22 +521,22 @@ final class QuickAssistantViewModel: ObservableObject {
             ) { [weak self] output in
                 guard let self else { return }
                 convertedFiles = [output]
-                response = "Saved the edited image as \(output.lastPathComponent)."
+                presentResponse("Saved the edited image as \(output.lastPathComponent).")
                 focusRequest += 1
             }
-            response = "Opened \(attachment.name) in the offline image editor."
+            presentResponse("Opened \(attachment.name) in the offline image editor.")
         } catch {
-            response = "Couldn’t open the image editor. \(error.localizedDescription)"
+            presentResponse("Couldn’t open the image editor. \(error.localizedDescription)")
         }
     }
 
     func enhanceImageAttachment() {
         guard let attachment = attachments.first else {
-            response = "Drop an image here first, then I can enhance it."
+            presentResponse("Drop an image here first, then I can enhance it.")
             return
         }
         guard canEnhanceImage else {
-            response = "Photo enhancement works with image files only."
+            presentResponse("Photo enhancement works with image files only.")
             return
         }
 
@@ -431,10 +573,11 @@ final class QuickAssistantViewModel: ObservableObject {
                 } catch {
                     response += " Automatic output action failed: \(error.localizedDescription)"
                 }
+                presentResponse(response)
             } catch is CancellationError {
                 return
             } catch {
-                response = "Couldn’t enhance the photo. \(error.localizedDescription)"
+                presentResponse("Couldn’t enhance the photo. \(error.localizedDescription)")
             }
             focusRequest += 1
         }
@@ -442,11 +585,11 @@ final class QuickAssistantViewModel: ObservableObject {
 
     func removeBackgroundFromAttachment() {
         guard let attachment = attachments.first else {
-            response = "Drop an image here first, then I can remove its background."
+            presentResponse("Drop an image here first, then I can remove its background.")
             return
         }
         guard canRemoveBackground else {
-            response = "Removing backgrounds works with image files only."
+            presentResponse("Removing backgrounds works with image files only.")
             return
         }
 
@@ -483,10 +626,11 @@ final class QuickAssistantViewModel: ObservableObject {
                 } catch {
                     response += " Automatic output action failed: \(error.localizedDescription)"
                 }
+                presentResponse(response)
             } catch is CancellationError {
                 return
             } catch {
-                response = "Couldn’t remove the background. \(error.localizedDescription)"
+                presentResponse("Couldn’t remove the background. \(error.localizedDescription)")
             }
             focusRequest += 1
         }
@@ -500,24 +644,24 @@ final class QuickAssistantViewModel: ObservableObject {
     func setAutomaticOutputAction(_ action: AssistantAutomaticOutputAction) {
         automaticOutputAction = action
         UserDefaults.standard.set(action.rawValue, forKey: "assistantAutomaticOutputAction")
-        response = action == .none
+        presentResponse(action == .none
             ? "Automatic output actions are off."
-            : "After conversion, SleepMusic will \(action.displayName.lowercased())."
+            : "After conversion, SleepMusic will \(action.displayName.lowercased()).")
     }
 
     func copyConvertedFiles() {
         guard copyOutputsToClipboard() else {
-            response = "There are no converted files to copy."
+            presentResponse("There are no converted files to copy.")
             return
         }
-        response = convertedFiles.count == 1
+        presentResponse(convertedFiles.count == 1
             ? "Copied the converted file to the clipboard."
-            : "Copied \(convertedFiles.count) converted files to the clipboard."
+            : "Copied \(convertedFiles.count) converted files to the clipboard.")
     }
 
     func compressConvertedFiles() {
         guard !convertedFiles.isEmpty else {
-            response = "There are no converted files to compress."
+            presentResponse("There are no converted files to compress.")
             return
         }
         guard let destination = chooseArchiveDestination(for: convertedFiles) else { return }
@@ -526,7 +670,7 @@ final class QuickAssistantViewModel: ObservableObject {
 
     func renameConvertedFile() {
         guard convertedFiles.count == 1, let source = convertedFiles.first else {
-            response = "Rename is available when there is exactly one converted file."
+            presentResponse("Rename is available when there is exactly one converted file.")
             return
         }
 
@@ -539,16 +683,16 @@ final class QuickAssistantViewModel: ObservableObject {
         guard panel.runModal() == .OK, let destination = panel.url else { return }
         guard destination != source else { return }
         guard !FileManager.default.fileExists(atPath: destination.path) else {
-            response = QuickAssistantOutputActions.OutputActionError.destinationExists.localizedDescription
+            presentResponse(QuickAssistantOutputActions.OutputActionError.destinationExists.localizedDescription)
             return
         }
 
         do {
             try FileManager.default.moveItem(at: source, to: destination)
             convertedFiles = [destination]
-            response = "Renamed the converted file to \(destination.lastPathComponent)."
+            presentResponse("Renamed the converted file to \(destination.lastPathComponent).")
         } catch {
-            response = "Rename failed. \(error.localizedDescription)"
+            presentResponse("Rename failed. \(error.localizedDescription)")
         }
     }
 
@@ -718,7 +862,7 @@ final class QuickAssistantViewModel: ObservableObject {
         let command = request.lowercased()
         guard command.contains("convert") else { return false }
         guard !attachments.isEmpty else {
-            response = "Drop or attach a file before asking me to convert it."
+            presentResponse("Drop or attach a file before asking me to convert it.")
             return true
         }
 
@@ -740,12 +884,12 @@ final class QuickAssistantViewModel: ObservableObject {
         } else if command.contains("caf") {
             requestedFormat = .caf
         } else {
-            response = "Choose an output format from the Convert menu."
+            presentResponse("Choose an output format from the Convert menu.")
             return true
         }
 
         guard let requestedFormat, availableConversionFormats.contains(requestedFormat) else {
-            response = "That output format isn’t available for the attached file."
+            presentResponse("That output format isn’t available for the attached file.")
             return true
         }
         convertAttachment(to: requestedFormat)
@@ -798,7 +942,7 @@ final class QuickAssistantViewModel: ObservableObject {
         panel.nameFieldStringValue = suggested.lastPathComponent
         guard panel.runModal() == .OK, let destination = panel.url else { return nil }
         guard !FileManager.default.fileExists(atPath: destination.path) else {
-            response = QuickAssistantOutputActions.OutputActionError.destinationExists.localizedDescription
+            presentResponse(QuickAssistantOutputActions.OutputActionError.destinationExists.localizedDescription)
             return nil
         }
         return destination
@@ -816,9 +960,9 @@ final class QuickAssistantViewModel: ObservableObject {
                     try QuickAssistantOutputActions.compress(files, to: destination)
                 }.value
                 convertedFiles.append(archive)
-                response = "Created \(archive.lastPathComponent)."
+                presentResponse("Created \(archive.lastPathComponent).")
             } catch {
-                response = "Compression failed. \(error.localizedDescription)"
+                presentResponse("Compression failed. \(error.localizedDescription)")
             }
             focusRequest += 1
         }
@@ -851,23 +995,214 @@ final class QuickAssistantViewModel: ObservableObject {
         return pasteboard.writeObjects(convertedFiles.map { $0 as NSURL })
     }
 
-    private func contextualPrompt(for request: String) -> String {
+    private func requestModelResponse(
+        for request: String,
+        history: [QuickAssistantMessage],
+        replacing messageID: UUID? = nil
+    ) {
+        guard SystemLanguageModel.default.isAvailable else {
+            presentResponse("Apple Intelligence is unavailable on this Mac.", replacing: messageID)
+            return
+        }
+
+        isWorking = true
+        response = ""
+        let contextualRequest = contextualRequest(for: request)
+        let historyBudget = max(
+            0,
+            min(
+                Self.maximumTranscriptCharacters,
+                12_000 - contextualRequest.prompt.count
+            )
+        )
+        let session = Self.makeSession(from: history, maximumCharacters: historyBudget)
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isWorking = false }
+            do {
+                let result = try await session.respond(to: contextualRequest.prompt)
+                guard !Task.isCancelled else { return }
+                presentResponse(
+                    result.content.trimmingCharacters(in: .whitespacesAndNewlines),
+                    context: contextualRequest.context,
+                    allowsRetry: true,
+                    replacing: messageID
+                )
+            } catch is CancellationError {
+                return
+            } catch {
+                presentResponse(
+                    "I couldn’t answer that right now. \(error.localizedDescription)",
+                    context: contextualRequest.context,
+                    allowsRetry: true,
+                    replacing: messageID
+                )
+            }
+        }
+    }
+
+    private static func makeSession(
+        from history: [QuickAssistantMessage],
+        maximumCharacters: Int
+    ) -> LanguageModelSession {
+        var completedTurns: [(user: String, assistant: String)] = []
+        var pendingUserText: String?
+        for message in history {
+            switch message.role {
+            case .user:
+                pendingUserText = message.text
+            case .assistant:
+                guard let userText = pendingUserText else { continue }
+                completedTurns.append((userText, message.text))
+                pendingUserText = nil
+            }
+        }
+
+        var remainingCharacters = maximumCharacters
+        var selectedTurns: [(user: String, assistant: String)] = []
+        for turn in completedTurns.reversed() where remainingCharacters > 0 {
+            let turnLength = turn.user.count + turn.assistant.count
+            if turnLength <= remainingCharacters {
+                selectedTurns.append(turn)
+                remainingCharacters -= turnLength
+                continue
+            }
+
+            guard selectedTurns.isEmpty, remainingCharacters >= 2 else { break }
+            let userBudget = min(turn.user.count, max(1, remainingCharacters / 3))
+            let assistantBudget = max(1, remainingCharacters - userBudget)
+            selectedTurns.append(
+                (
+                    String(turn.user.prefix(userBudget)),
+                    String(turn.assistant.prefix(assistantBudget))
+                )
+            )
+            break
+        }
+
+        var entries: [Transcript.Entry] = [
+            .instructions(
+                .init(
+                    segments: [.text(.init(content: modelInstructions))],
+                    toolDefinitions: []
+                )
+            )
+        ]
+        for turn in selectedTurns.reversed() {
+            entries.append(
+                .prompt(
+                    .init(
+                        segments: [.text(.init(content: turn.user))]
+                    )
+                )
+            )
+            entries.append(
+                .response(
+                    .init(
+                        assetIDs: [],
+                        segments: [.text(.init(content: turn.assistant))]
+                    )
+                )
+            )
+        }
+        return LanguageModelSession(transcript: Transcript(entries: entries))
+    }
+
+    private func appendMessage(
+        role: QuickAssistantMessageRole,
+        text: String,
+        context: [QuickAssistantContextChip] = [],
+        allowsRetry: Bool = false
+    ) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        messages.append(
+            QuickAssistantMessage(
+                role: role,
+                text: trimmed,
+                context: context,
+                allowsRetry: allowsRetry
+            )
+        )
+        if messages.count > Self.maximumSavedMessages {
+            messages.removeFirst(messages.count - Self.maximumSavedMessages)
+        }
+        persistMessages()
+    }
+
+    private func presentResponse(
+        _ text: String,
+        context: [QuickAssistantContextChip] = [],
+        allowsRetry: Bool = false,
+        replacing messageID: UUID? = nil
+    ) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        response = trimmed
+
+        if let messageID,
+           let index = messages.firstIndex(where: { $0.id == messageID }) {
+            messages[index].text = trimmed
+            messages[index].context = context
+            messages[index].allowsRetry = allowsRetry
+            persistMessages()
+            return
+        }
+
+        if messages.last?.role == .assistant, messages.last?.text == trimmed { return }
+        appendMessage(
+            role: .assistant,
+            text: trimmed,
+            context: context,
+            allowsRetry: allowsRetry
+        )
+    }
+
+    private func persistMessages() {
+        guard savesConversationHistory else { return }
+        let messagesToSave = messages.suffix(Self.maximumSavedMessages).map { message in
+            var savedMessage = message
+            savedMessage.text = String(
+                savedMessage.text.prefix(Self.maximumSavedMessageCharacters)
+            )
+            return savedMessage
+        }
+        guard let data = try? JSONEncoder().encode(messagesToSave) else { return }
+        UserDefaults.standard.set(data, forKey: Self.savedMessagesKey)
+    }
+
+    private struct ContextualRequest {
+        let prompt: String
+        let context: [QuickAssistantContextChip]
+    }
+
+    private func contextualRequest(for request: String) -> ContextualRequest {
         var context: [String] = []
+        var chips: [QuickAssistantContextChip] = []
         if let track = spotify.nowPlaying {
             context.append("Current Spotify track: \(track.title) by \(track.artist); playback is \(track.isPlaying ? "playing" : "paused").")
+            chips.append(.init(label: "Spotify", systemImage: "music.note"))
         }
         if let lyric = lyrics.currentLine?.text, !lyric.isEmpty {
             context.append("Current lyric: \(lyric)")
+            chips.append(.init(label: "Current lyric", systemImage: "quote.bubble"))
         }
 
         if request.lowercased().contains("clipboard"),
            let clipboard = NSPasteboard.general.string(forType: .string),
            !clipboard.isEmpty {
             context.append("Clipboard text:\n\(String(clipboard.prefix(8_000)))")
+            chips.append(.init(label: "Clipboard", systemImage: "clipboard"))
         }
 
         if !attachments.isEmpty {
             context.append("Attached files: \(attachments.map { "\($0.name) (\($0.typeName))" }.joined(separator: ", ")).")
+            for attachment in attachments.prefix(3) {
+                chips.append(.init(label: attachment.name, systemImage: "paperclip"))
+            }
+            if attachments.count > 3 {
+                chips.append(.init(label: "+\(attachments.count - 3) files", systemImage: "doc.on.doc"))
+            }
             let readableText = attachments
                 .filter(\.hasReadableText)
                 .map { "File: \($0.name)\n\($0.extractedText)" }
@@ -879,8 +1214,10 @@ final class QuickAssistantViewModel: ObservableObject {
             }
         }
 
-        if context.isEmpty { return request }
-        return "\(context.joined(separator: "\n"))\n\nUser request: \(request)"
+        let prompt = context.isEmpty
+            ? request
+            : "\(context.joined(separator: "\n"))\n\nUser request: \(request)"
+        return ContextualRequest(prompt: prompt, context: chips)
     }
 }
 

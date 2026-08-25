@@ -81,6 +81,14 @@ Examples:
 
 Clipboard content is limited to the first 8,000 characters and is only read when explicitly requested.
 
+### Conversations
+
+Quick Assistant keeps the current conversation visible as user and assistant message bubbles, so follow-up requests such as `Make that shorter` or `Give me more detail` retain the recent conversational context. Responses include compact context chips when Spotify, the current lyric, the clipboard, or attached files contributed to an answer.
+
+Assistant responses can be copied, saved as plain text, shared, or retried. Choose **New Conversation** from the conversation menu to clear the current thread and its attachments.
+
+Conversation history is kept in memory for the current app session by default. To restore it after relaunching SleepMusic, enable **Keep History on This Mac** from the conversation menu. This opt-in history is stored locally and can be removed by turning the option off or starting a new conversation.
+
 ### Calendar notes
 
 Click the calendar button in Quick Assistant, choose **Add calendar note**, or type a command such as `add dentist appointment to my calendar tomorrow at 3 PM`. Review the title, optional notes, date, time, all-day setting, and duration before saving to the default macOS calendar.
@@ -211,6 +219,7 @@ Press any key or click to dismiss Sleep Mode.
 - Spotify control uses Apple Events and requires macOS Automation permission.
 - Calendar notes use write-only EventKit access and cannot read existing events.
 - General assistant responses use Apple's on-device model when available.
+- Conversation history is not persisted unless **Keep History on This Mac** is enabled; saved history remains local.
 - Clipboard text is read only for assistant requests that mention `clipboard`.
 - Lyrics and artwork require network access.
 - SleepMusic's lock-screen surface never reads or intercepts password input.
