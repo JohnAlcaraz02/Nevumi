@@ -87,6 +87,7 @@ final class QuickAssistantViewModel: ObservableObject {
     @Published private(set) var isAnalyzingAttachment = false
     @Published private(set) var isConverting = false
     @Published private(set) var isRemovingBackground = false
+    @Published private(set) var isChangingBackgroundColor = false
     @Published private(set) var isEnhancingImage = false
     @Published private(set) var isShowingCalendarComposer = false
     @Published private(set) var isSavingCalendarEntry = false
@@ -149,6 +150,7 @@ final class QuickAssistantViewModel: ObservableObject {
         isAnalyzingAttachment = false
         isConverting = false
         isRemovingBackground = false
+        isChangingBackgroundColor = false
         isEnhancingImage = false
         isShowingCalendarComposer = false
         isSavingCalendarEntry = false
@@ -224,6 +226,7 @@ final class QuickAssistantViewModel: ObservableObject {
             || isAnalyzingAttachment
             || isConverting
             || isRemovingBackground
+            || isChangingBackgroundColor
             || isEnhancingImage
             || isSavingCalendarEntry
     }
@@ -311,6 +314,7 @@ final class QuickAssistantViewModel: ObservableObject {
         isWorking = false
         isConverting = false
         isRemovingBackground = false
+        isChangingBackgroundColor = false
         isEnhancingImage = false
         isAnalyzingAttachment = true
         attachments = []
@@ -372,6 +376,7 @@ final class QuickAssistantViewModel: ObservableObject {
         isAnalyzingAttachment = false
         isConverting = false
         isRemovingBackground = false
+        isChangingBackgroundColor = false
         isEnhancingImage = false
         attachments = []
         convertedFiles = []
@@ -385,6 +390,7 @@ final class QuickAssistantViewModel: ObservableObject {
               !isWorking,
               !isConverting,
               !isRemovingBackground,
+              !isChangingBackgroundColor,
               !isEnhancingImage,
               !isSavingCalendarEntry,
               !isAnalyzingAttachment else { return }
@@ -636,6 +642,58 @@ final class QuickAssistantViewModel: ObservableObject {
         }
     }
 
+    func changeBackgroundColor(
+        to color: QuickAssistantBackgroundRemover.ReplacementColor
+    ) {
+        guard let attachment = attachments.first else {
+            presentResponse("Drop an image here first, then tell me which background color to use.")
+            return
+        }
+        guard canRemoveBackground else {
+            presentResponse("Changing the background color works with image files only.")
+            return
+        }
+
+        let proposed = attachment.url.deletingLastPathComponent().appendingPathComponent(
+            QuickAssistantBackgroundRemover.replacementFilename(
+                for: attachment.url,
+                color: color
+            )
+        )
+        let destination = QuickAssistantOutputActions.uniqueURL(for: proposed)
+        isChangingBackgroundColor = true
+        convertedFiles = []
+        response = "Changing the background of \(attachment.name) to \(color.displayName)…"
+        let source = attachment.url
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isChangingBackgroundColor = false }
+            do {
+                let output = try await Task.detached(priority: .userInitiated) {
+                    try await QuickAssistantBackgroundRemover.replaceBackground(
+                        from: source,
+                        destination: destination,
+                        color: color
+                    )
+                }.value
+                guard !Task.isCancelled else { return }
+                convertedFiles = [output]
+                response = "Changed the background to \(color.displayName) and saved \(output.lastPathComponent)."
+                do {
+                    try await runAutomaticOutputAction()
+                } catch {
+                    response += " Automatic output action failed: \(error.localizedDescription)"
+                }
+                presentResponse(response)
+            } catch is CancellationError {
+                return
+            } catch {
+                presentResponse("Couldn’t change the background color. \(error.localizedDescription)")
+            }
+            focusRequest += 1
+        }
+    }
+
     func revealConvertedFiles() {
         guard !convertedFiles.isEmpty else { return }
         NSWorkspace.shared.activateFileViewerSelecting(convertedFiles)
@@ -720,6 +778,20 @@ final class QuickAssistantViewModel: ObservableObject {
             return response
         }
 
+        let backgroundColorIntent = command.contains("background")
+            && (command.contains("background color")
+                || command.contains("color of the background")
+                || QuickAssistantBackgroundRemover.replacementColor(in: command) != nil)
+            && ["change", "make", "set", "replace", "turn", "use"]
+                .contains(where: { command.contains($0) })
+        if backgroundColorIntent {
+            guard let color = QuickAssistantBackgroundRemover.replacementColor(in: command) else {
+                return "Which color should I use? Try red, blue, white, black, or a hex color such as #4A90E2."
+            }
+            changeBackgroundColor(to: color)
+            return response
+        }
+
         if command.contains("enhance")
             || command.contains("improve photo")
             || command.contains("improve image")
@@ -800,7 +872,7 @@ final class QuickAssistantViewModel: ObservableObject {
             return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
         }
         if command == "help" || command == "what can you do" {
-            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can open an offline editor, enhance the photo, erase objects, replace or remove the background. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
+            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, change a background color automatically, or remove the background. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
         }
         return nil
     }
