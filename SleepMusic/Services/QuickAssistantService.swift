@@ -939,6 +939,9 @@ final class QuickAssistantViewModel: ObservableObject {
 
     private func requestedBackgroundDescription(in request: String) -> String? {
         let patterns = [
+            #"(?i)\bmake\s+(?:(?:the|this|my)\s+)?(?:image|photo|picture)\s+(?:look\s+(?:like\s+)?(?:it(?:'s|\s+is)\s+)?(?:was\s+)?|appear\s+)?(?:in|at|on|inside)\s+(.+)$"#,
+            #"(?i)\b(?:put|place)\s+(?:me|us|the\s+(?:person|people|subject)|(?:the|this|my)\s+(?:image|photo|picture))\s+(?:in|at|on|inside)\s+(.+)$"#,
+            #"(?i)\bmake\s+(?:it|me|us|the\s+(?:person|people|subject))\s+look\s+like\s+(?:it(?:'s|\s+is)\s+|i(?:'m|\s+am)\s+|we(?:'re|\s+are)\s+)?(?:in|at|on|inside)\s+(.+)$"#,
             #"(?i)\bremove\s+(?:the\s+)?background\s+(?:and\s+)?replace\s+(?:it\s+)?with\s+(.+)$"#,
             #"(?i)\b(?:replace|change|swap|set|make|turn|use)\s+(?:the\s+)?background\s+(?:with|to|into|as)\s+(.+)$"#,
             #"(?i)\b(?:replace|change|swap|set|make|turn|use)\s+(?:the\s+)?background\s+(.+)$"#,
