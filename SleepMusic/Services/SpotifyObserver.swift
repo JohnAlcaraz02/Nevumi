@@ -44,6 +44,27 @@ final class SpotifyObserver: ObservableObject {
         NSAppleScript(source: "tell application \"Spotify\" to previous track")?.executeAndReturnError(nil)
     }
 
+    /// Asks Spotify to play the top catalog match for a free-form search.
+    /// Spotify resolves the search URI itself, so no Web API credentials are
+    /// needed and playback uses the account already signed in to the app.
+    @discardableResult
+    func playSearch(_ query: String) -> Bool {
+        let allowed = CharacterSet(
+            charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
+        )
+        guard let encoded = query.addingPercentEncoding(withAllowedCharacters: allowed),
+              !encoded.isEmpty else { return false }
+        let uri = "spotify:search:" + encoded
+        let escapedURI = uri
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        var error: NSDictionary?
+        NSAppleScript(
+            source: "tell application \"Spotify\" to play track \"\(escapedURI)\""
+        )?.executeAndReturnError(&error)
+        return error == nil
+    }
+
     func toggleShuffle() {
         NSAppleScript(source: "tell application \"Spotify\" to set shuffling to not shuffling")?.executeAndReturnError(nil)
     }

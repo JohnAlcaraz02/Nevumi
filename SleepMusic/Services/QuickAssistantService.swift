@@ -931,6 +931,11 @@ final class QuickAssistantViewModel: ObservableObject {
             guard let track = spotify.nowPlaying else { return "Spotify isn’t playing anything right now." }
             return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
         }
+        if let spotifySearch = requestedSpotifySearch(in: request) {
+            return spotify.playSearch(spotifySearch)
+                ? "Playing the top Spotify result for “\(spotifySearch)”."
+                : "I couldn’t ask Spotify to play “\(spotifySearch)”. Check that Spotify is open and Automation access is allowed."
+        }
         if command == "help" || command == "what can you do" {
             return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, remove backgrounds, use another photo, or generate a described background with Image Playground. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
         }
@@ -965,6 +970,41 @@ final class QuickAssistantViewModel: ObservableObject {
             }
         }
         return nil
+    }
+
+    private func requestedSpotifySearch(in request: String) -> String? {
+        var value = request.trimmingCharacters(in: .whitespacesAndNewlines)
+        let prefixPatterns = [
+            #"(?i)^\s*(?:can|could|would)\s+you\s+(?:please\s+)?(?:play|put\s+on|listen\s+to)\s+"#,
+            #"(?i)^\s*please\s+(?:play|put\s+on|listen\s+to)\s+"#,
+            #"(?i)^\s*(?:play|put\s+on|listen\s+to)\s+"#,
+        ]
+        guard let prefix = prefixPatterns.compactMap({ pattern -> NSRange? in
+            guard let expression = try? NSRegularExpression(pattern: pattern) else { return nil }
+            let range = NSRange(value.startIndex..., in: value)
+            return expression.firstMatch(in: value, range: range)?.range
+        }).first,
+        let prefixRange = Range(prefix, in: value) else { return nil }
+        value.removeSubrange(prefixRange)
+
+        value = value.replacingOccurrences(
+            of: #"(?i)\s+(?:on|in|with)\s+spotify\b"#,
+            with: " ",
+            options: .regularExpression
+        )
+        value = value.replacingOccurrences(
+            of: #"(?i)\bbu\s+(?=[\p{L}\p{N}])"#,
+            with: "by ",
+            options: .regularExpression
+        )
+        value = value.trimmingCharacters(
+            in: .whitespacesAndNewlines.union(.punctuationCharacters)
+        )
+        let normalized = value.lowercased()
+        guard !value.isEmpty,
+              !["spotify", "music", "something", "a song"].contains(normalized)
+        else { return nil }
+        return value
     }
 
     private func isPlainColorDescription(_ description: String) -> Bool {

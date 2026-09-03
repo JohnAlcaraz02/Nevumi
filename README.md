@@ -43,6 +43,7 @@ Press `⌥ Space` or choose **Open Quick Assistant** from the menu-bar menu. The
 | Next track | `next`, `next song`, `skip`, `skip song`, `skip track` |
 | Previous track | `previous`, `previous song`, `previous track`, `go back` |
 | Show current track | `what song is playing?`, `what is playing?`, `now playing` |
+| Search and play | `play Buwan by Juan Karlos on Spotify`, `put on Here Comes the Sun` |
 
 Spotify commands are processed locally and do not require Apple Intelligence.
 
