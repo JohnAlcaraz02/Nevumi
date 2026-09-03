@@ -1,7 +1,6 @@
 import AppKit
 import CoreImage
 import Foundation
-import ImagePlayground
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -48,8 +47,6 @@ final class QuickAssistantImageEditorModel: ObservableObject {
     @Published private(set) var backgroundStyle: BackgroundStyle = .transparent
     @Published private(set) var backgroundColor: Color = .indigo
     @Published private(set) var backgroundPhotoName: String?
-    @Published var backgroundPrompt = ""
-    @Published var isShowingBackgroundGenerator = false
     @Published private(set) var isProcessing = false
     @Published private(set) var statusMessage = "Brush over anything you want to remove."
     @Published private(set) var canUndo = false
@@ -90,17 +87,6 @@ final class QuickAssistantImageEditorModel: ObservableObject {
         pixelSize.width / max(pixelSize.height, 1)
     }
 
-    var canGenerateBackground: Bool {
-        ImagePlaygroundViewController.isAvailable
-            && !backgroundPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !isProcessing
-    }
-
-    var backgroundGenerationConcept: String {
-        let description = backgroundPrompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        return "A standalone background scene showing \(description). No people, characters, text, or foreground subjects."
-    }
-
     func setBackgroundStyle(_ style: BackgroundStyle) {
         backgroundStyle = style
         if style == .photo, backgroundPhoto == nil {
@@ -138,41 +124,6 @@ final class QuickAssistantImageEditorModel: ObservableObject {
         } catch {
             statusMessage = "Couldn’t use that background image. " + error.localizedDescription
         }
-    }
-
-    func presentBackgroundGenerator(prompt: String? = nil) {
-        if let prompt {
-            backgroundPrompt = prompt.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
-        guard ImagePlaygroundViewController.isAvailable else {
-            statusMessage = "Background generation requires Image Playground and Apple Intelligence on a supported Mac."
-            return
-        }
-        guard !backgroundPrompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            statusMessage = "Describe the background you want first."
-            return
-        }
-        isShowingBackgroundGenerator = true
-    }
-
-    func useGeneratedBackground(at source: URL) {
-        do {
-            backgroundPhoto = try Self.loadNormalizedImage(from: source)
-            backgroundPhotoName = "Generated background"
-            backgroundStyle = .photo
-            refreshPreview(force: true)
-            if maskHasEdits {
-                statusMessage = "Applied the generated background."
-            } else {
-                removeBackgroundAutomatically()
-            }
-        } catch {
-            statusMessage = "Couldn’t use the generated background. " + error.localizedDescription
-        }
-    }
-
-    func cancelBackgroundGeneration() {
-        statusMessage = "Background generation cancelled."
     }
 
     func beginStroke() {
@@ -573,11 +524,7 @@ final class QuickAssistantImageEditorController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
     private var model: QuickAssistantImageEditorModel?
 
-    func present(
-        source: URL,
-        initialBackgroundPrompt: String? = nil,
-        onSaved: @escaping (URL) -> Void
-    ) throws {
+    func present(source: URL, onSaved: @escaping (URL) -> Void) throws {
         window?.close()
 
         let model = try QuickAssistantImageEditorModel(sourceURL: source)
@@ -603,11 +550,6 @@ final class QuickAssistantImageEditorController: NSObject, NSWindowDelegate {
         NSApp.activate(ignoringOtherApps: true)
         self.model = model
         self.window = window
-        if let initialBackgroundPrompt {
-            DispatchQueue.main.async {
-                model.presentBackgroundGenerator(prompt: initialBackgroundPrompt)
-            }
-        }
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -628,13 +570,6 @@ private struct QuickAssistantImageEditorView: View {
         }
         .frame(minWidth: 820, minHeight: 580)
         .background(Color(nsColor: .windowBackgroundColor))
-        .imagePlaygroundSheet(
-            isPresented: $model.isShowingBackgroundGenerator,
-            concept: model.backgroundGenerationConcept,
-            sourceImage: Optional<Image>.none,
-            onCompletion: model.useGeneratedBackground,
-            onCancellation: model.cancelBackgroundGeneration
-        )
     }
 
     private var sidebar: some View {
@@ -693,16 +628,6 @@ private struct QuickAssistantImageEditorView: View {
                     .disabled(model.isProcessing)
                 }
 
-                TextField("e.g. a quiet beach at sunset", text: $model.backgroundPrompt)
-                    .textFieldStyle(.roundedBorder)
-
-                Button {
-                    model.presentBackgroundGenerator()
-                } label: {
-                    Label("Generate Background", systemImage: "sparkles.rectangle.stack")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .disabled(!model.canGenerateBackground)
             }
 
             editorSection("OBJECT ERASER") {

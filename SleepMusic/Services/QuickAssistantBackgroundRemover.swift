@@ -1,6 +1,7 @@
 import AppKit
 import CoreImage
 import Foundation
+import ImagePlayground
 import UniformTypeIdentifiers
 import Vision
 
@@ -94,6 +95,16 @@ enum QuickAssistantBackgroundRemover {
     static func replacementFilename(for source: URL, color: ReplacementColor) -> String {
         source.deletingPathExtension().lastPathComponent
             + "-" + color.filenameComponent + "-background.png"
+    }
+
+    static func generatedBackgroundFilename(for source: URL, prompt: String) -> String {
+        let words = prompt.lowercased()
+            .components(separatedBy: CharacterSet.alphanumerics.inverted)
+            .filter { !$0.isEmpty }
+            .prefix(6)
+        let description = words.isEmpty ? "generated" : words.joined(separator: "-")
+        return source.deletingPathExtension().lastPathComponent
+            + "-" + description + "-background.png"
     }
 
     static func removeBackground(from source: URL, destination: URL) async throws -> URL {
@@ -206,6 +217,83 @@ enum QuickAssistantBackgroundRemover {
         return destination
     }
 
+    static func replaceBackground(
+        from source: URL,
+        destination: URL,
+        prompt: String
+    ) async throws -> URL {
+        let hasSecurityAccess = source.startAccessingSecurityScopedResource()
+        defer {
+            if hasSecurityAccess { source.stopAccessingSecurityScopedResource() }
+        }
+
+        let sourceImage = try normalizedImage(from: source)
+        let creator = try await ImageCreator()
+        guard let style = creator.availableStyles.first else {
+            throw RemovalError.generationUnavailable
+        }
+        let concept = ImagePlaygroundConcept.text(
+            "A standalone background scene showing \(prompt). No people, characters, words, or foreground subjects."
+        )
+        var generatedBackground: CGImage?
+        for try await generated in creator.images(
+            for: [concept],
+            style: style,
+            limit: 1
+        ) {
+            generatedBackground = generated.cgImage
+            break
+        }
+        guard let generatedBackground else {
+            throw RemovalError.generationFailed
+        }
+
+        let mask = try await foregroundMask(for: sourceImage)
+        let extent = CGRect(x: 0, y: 0, width: sourceImage.width, height: sourceImage.height)
+        let unscaledBackground = CIImage(cgImage: generatedBackground)
+        let scale = max(
+            extent.width / unscaledBackground.extent.width,
+            extent.height / unscaledBackground.extent.height
+        )
+        let scaledBackground = unscaledBackground.transformed(
+            by: CGAffineTransform(scaleX: scale, y: scale)
+        )
+        let background = scaledBackground.transformed(by: CGAffineTransform(
+            translationX: extent.midX - scaledBackground.extent.midX,
+            y: extent.midY - scaledBackground.extent.midY
+        )).cropped(to: extent)
+
+        guard let blend = CIFilter(name: "CIBlendWithMask") else {
+            throw RemovalError.encodingFailed
+        }
+        blend.setValue(CIImage(cgImage: sourceImage), forKey: kCIInputImageKey)
+        blend.setValue(background, forKey: kCIInputBackgroundImageKey)
+        blend.setValue(CIImage(cgImage: mask), forKey: kCIInputMaskImageKey)
+
+        let context = CIContext(options: [.cacheIntermediates: false])
+        let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)
+        guard let colorSpace,
+              let composited = blend.outputImage?.cropped(to: extent),
+              let output = context.createCGImage(
+                composited,
+                from: extent,
+                format: .RGBA8,
+                colorSpace: colorSpace
+              ),
+              let data = NSBitmapImageRep(cgImage: output).representation(
+                using: .png,
+                properties: [:]
+              ) else {
+            throw RemovalError.encodingFailed
+        }
+        do {
+            try data.write(to: destination, options: .atomic)
+        } catch {
+            throw RemovalError.writeFailed
+        }
+        return destination
+    }
+
     /// Returns a full-resolution grayscale mask where white pixels are
     /// foreground and black pixels are background. The editor uses this as a
     /// starting point that the user can refine with erase and restore brushes.
@@ -230,6 +318,27 @@ enum QuickAssistantBackgroundRemover {
         return output
     }
 
+    private static func normalizedImage(from source: URL) throws -> CGImage {
+        guard let input = CIImage(
+            contentsOf: source,
+            options: [.applyOrientationProperty: true]
+        ) else {
+            throw RemovalError.unreadableImage
+        }
+        let extent = input.extent.integral
+        guard !extent.isEmpty, !extent.isInfinite,
+              let colorSpace = CGColorSpace(name: CGColorSpace.sRGB),
+              let image = CIContext(options: [.cacheIntermediates: false]).createCGImage(
+                input,
+                from: extent,
+                format: .RGBA8,
+                colorSpace: colorSpace
+              ) else {
+            throw RemovalError.unreadableImage
+        }
+        return image
+    }
+
     private static func firstMatch(in value: String, pattern: String) -> Substring? {
         guard let range = value.range(of: pattern, options: .regularExpression) else {
             return nil
@@ -242,6 +351,8 @@ enum QuickAssistantBackgroundRemover {
         case noSubjectFound
         case encodingFailed
         case writeFailed
+        case generationUnavailable
+        case generationFailed
 
         var errorDescription: String? {
             switch self {
@@ -249,6 +360,8 @@ enum QuickAssistantBackgroundRemover {
             case .noSubjectFound: return "No subject stood out enough from the background to cut out."
             case .encodingFailed: return "The cutout could not be encoded as a PNG."
             case .writeFailed: return "The cutout could not be saved."
+            case .generationUnavailable: return "Background generation is not available on this Mac."
+            case .generationFailed: return "No background image was generated."
             }
         }
     }

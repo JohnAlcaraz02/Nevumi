@@ -88,6 +88,7 @@ final class QuickAssistantViewModel: ObservableObject {
     @Published private(set) var isConverting = false
     @Published private(set) var isRemovingBackground = false
     @Published private(set) var isChangingBackgroundColor = false
+    @Published private(set) var isGeneratingBackground = false
     @Published private(set) var isEnhancingImage = false
     @Published private(set) var isShowingCalendarComposer = false
     @Published private(set) var isSavingCalendarEntry = false
@@ -151,6 +152,7 @@ final class QuickAssistantViewModel: ObservableObject {
         isConverting = false
         isRemovingBackground = false
         isChangingBackgroundColor = false
+        isGeneratingBackground = false
         isEnhancingImage = false
         isShowingCalendarComposer = false
         isSavingCalendarEntry = false
@@ -227,6 +229,7 @@ final class QuickAssistantViewModel: ObservableObject {
             || isConverting
             || isRemovingBackground
             || isChangingBackgroundColor
+            || isGeneratingBackground
             || isEnhancingImage
             || isSavingCalendarEntry
     }
@@ -315,6 +318,7 @@ final class QuickAssistantViewModel: ObservableObject {
         isConverting = false
         isRemovingBackground = false
         isChangingBackgroundColor = false
+        isGeneratingBackground = false
         isEnhancingImage = false
         isAnalyzingAttachment = true
         attachments = []
@@ -377,6 +381,7 @@ final class QuickAssistantViewModel: ObservableObject {
         isConverting = false
         isRemovingBackground = false
         isChangingBackgroundColor = false
+        isGeneratingBackground = false
         isEnhancingImage = false
         attachments = []
         convertedFiles = []
@@ -391,6 +396,7 @@ final class QuickAssistantViewModel: ObservableObject {
               !isConverting,
               !isRemovingBackground,
               !isChangingBackgroundColor,
+              !isGeneratingBackground,
               !isEnhancingImage,
               !isSavingCalendarEntry,
               !isAnalyzingAttachment else { return }
@@ -511,7 +517,7 @@ final class QuickAssistantViewModel: ObservableObject {
 
     var canEditImage: Bool { canEnhanceImage }
 
-    func editImageAttachment(initialBackgroundPrompt: String? = nil) {
+    func editImageAttachment() {
         guard let attachment = attachments.first else {
             presentResponse("Drop an image here first, then I can open the editor.")
             return
@@ -523,8 +529,7 @@ final class QuickAssistantViewModel: ObservableObject {
 
         do {
             try QuickAssistantImageEditorController.shared.present(
-                source: attachment.url,
-                initialBackgroundPrompt: initialBackgroundPrompt
+                source: attachment.url
             ) { [weak self] output in
                 guard let self else { return }
                 convertedFiles = [output]
@@ -695,6 +700,54 @@ final class QuickAssistantViewModel: ObservableObject {
         }
     }
 
+    func generateBackground(for prompt: String) {
+        guard let attachment = attachments.first else {
+            presentResponse("Drop an image here first, then describe the background you want.")
+            return
+        }
+        guard canRemoveBackground else {
+            presentResponse("Background replacement works with image files only.")
+            return
+        }
+
+        let proposed = attachment.url.deletingLastPathComponent().appendingPathComponent(
+            QuickAssistantBackgroundRemover.generatedBackgroundFilename(
+                for: attachment.url,
+                prompt: prompt
+            )
+        )
+        let destination = QuickAssistantOutputActions.uniqueURL(for: proposed)
+        isGeneratingBackground = true
+        convertedFiles = []
+        response = "Creating a \(prompt) background and applying it to \(attachment.name)…"
+        let source = attachment.url
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isGeneratingBackground = false }
+            do {
+                let output = try await QuickAssistantBackgroundRemover.replaceBackground(
+                    from: source,
+                    destination: destination,
+                    prompt: prompt
+                )
+                guard !Task.isCancelled else { return }
+                convertedFiles = [output]
+                response = "Replaced the background with \(prompt) and saved \(output.lastPathComponent)."
+                do {
+                    try await runAutomaticOutputAction()
+                } catch {
+                    response += " Automatic output action failed: \(error.localizedDescription)"
+                }
+                presentResponse(response)
+            } catch is CancellationError {
+                return
+            } catch {
+                presentResponse("Couldn’t generate and replace the background. \(error.localizedDescription)")
+            }
+            focusRequest += 1
+        }
+    }
+
     func revealConvertedFiles() {
         guard !convertedFiles.isEmpty else { return }
         NSWorkspace.shared.activateFileViewerSelecting(convertedFiles)
@@ -788,7 +841,7 @@ final class QuickAssistantViewModel: ObservableObject {
         }
 
         if let backgroundDescription {
-            editImageAttachment(initialBackgroundPrompt: backgroundDescription)
+            generateBackground(for: backgroundDescription)
             return response
         }
 

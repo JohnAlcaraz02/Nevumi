@@ -336,6 +336,7 @@ struct QuickAssistantView: View {
             || viewModel.isConverting
             || viewModel.isRemovingBackground
             || viewModel.isChangingBackgroundColor
+            || viewModel.isGeneratingBackground
             || viewModel.isEnhancingImage
     }
 
@@ -529,6 +530,7 @@ struct QuickAssistantView: View {
                             || viewModel.isConverting
                             || viewModel.isRemovingBackground
                             || viewModel.isChangingBackgroundColor
+                            || viewModel.isGeneratingBackground
                             || viewModel.isEnhancingImage
                     )
                 }
@@ -697,6 +699,7 @@ struct QuickAssistantView: View {
                     || viewModel.isConverting
                     || viewModel.isRemovingBackground
                     || viewModel.isChangingBackgroundColor
+                    || viewModel.isGeneratingBackground
                     || viewModel.isEnhancingImage
                     || viewModel.isAnalyzingAttachment
             )
@@ -717,6 +720,7 @@ struct QuickAssistantView: View {
     private var activityLabel: String {
         if viewModel.isAnalyzingAttachment { return "Reading the file…" }
         if viewModel.isEnhancingImage { return "Enhancing the photo on this Mac…" }
+        if viewModel.isGeneratingBackground { return "Generating and applying the new background…" }
         if viewModel.isChangingBackgroundColor { return "Changing the background color on this Mac…" }
         if viewModel.isRemovingBackground { return "Removing the background on this Mac…" }
         if viewModel.isConverting { return "Converting the file…" }
