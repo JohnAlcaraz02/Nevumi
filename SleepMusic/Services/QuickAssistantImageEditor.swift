@@ -62,6 +62,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
     private let renderContext = CIContext(options: [.cacheIntermediates: false])
     private var undoStack: [CGImage] = []
     private var redoStack: [CGImage] = []
+    private var maskHasEdits = false
     private var strokeIsActive = false
     private var previousStrokePoint: CGPoint?
     private var lastPreviewTime: TimeInterval = 0
@@ -88,6 +89,9 @@ final class QuickAssistantImageEditorModel: ObservableObject {
 
     func setBackgroundStyle(_ style: BackgroundStyle) {
         backgroundStyle = style
+        if style == .photo, backgroundPhoto == nil {
+            statusMessage = "Choose a second image to use as the new background."
+        }
         refreshPreview(force: true)
     }
 
@@ -111,8 +115,12 @@ final class QuickAssistantImageEditorModel: ObservableObject {
             backgroundPhoto = try Self.loadNormalizedImage(from: source)
             backgroundPhotoName = source.lastPathComponent
             backgroundStyle = .photo
-            statusMessage = "Using \(source.lastPathComponent) as the background. Remove the original background to reveal it."
             refreshPreview(force: true)
+            if maskHasEdits {
+                statusMessage = "Using \(source.lastPathComponent) as the background."
+            } else {
+                removeBackgroundAutomatically()
+            }
         } catch {
             statusMessage = "Couldn’t use that background image. " + error.localizedDescription
         }
@@ -133,6 +141,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
 
         if !strokeIsActive {
             registerUndo()
+            maskHasEdits = true
             strokeIsActive = true
         }
 
@@ -187,6 +196,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
                 }.value
                 registerUndo()
                 replaceMask(with: foregroundMask)
+                maskHasEdits = true
                 statusMessage = "Background removed. Refine it with Erase or Restore."
             } catch {
                 statusMessage = "Couldn’t isolate the foreground. " + error.localizedDescription
@@ -203,6 +213,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
         maskContext.setFillColor(gray: 1, alpha: 1)
         maskContext.fill(CGRect(origin: .zero, size: pixelSize))
         maskContext.restoreGState()
+        maskHasEdits = false
         statusMessage = "Restored the original image."
         refreshPreview(force: true)
     }
