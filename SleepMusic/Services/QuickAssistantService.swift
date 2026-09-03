@@ -511,7 +511,7 @@ final class QuickAssistantViewModel: ObservableObject {
 
     var canEditImage: Bool { canEnhanceImage }
 
-    func editImageAttachment() {
+    func editImageAttachment(initialBackgroundPrompt: String? = nil) {
         guard let attachment = attachments.first else {
             presentResponse("Drop an image here first, then I can open the editor.")
             return
@@ -523,7 +523,8 @@ final class QuickAssistantViewModel: ObservableObject {
 
         do {
             try QuickAssistantImageEditorController.shared.present(
-                source: attachment.url
+                source: attachment.url,
+                initialBackgroundPrompt: initialBackgroundPrompt
             ) { [weak self] output in
                 guard let self else { return }
                 convertedFiles = [output]
@@ -771,17 +772,11 @@ final class QuickAssistantViewModel: ObservableObject {
             return readable.map { "--- \($0.name) ---\n\($0.extractedText)" }.joined(separator: "\n\n")
         }
 
-        if command.contains("background"),
-           ["remove", "erase", "delete", "cut out", "cutout", "get rid", "strip", "transparent", "isolate"]
-               .contains(where: { command.contains($0) }) {
-            removeBackgroundFromAttachment()
-            return response
-        }
-
+        let backgroundDescription = requestedBackgroundDescription(in: request)
         let backgroundColorIntent = command.contains("background")
             && (command.contains("background color")
                 || command.contains("color of the background")
-                || QuickAssistantBackgroundRemover.replacementColor(in: command) != nil)
+                || backgroundDescription.map(isPlainColorDescription) == true)
             && ["change", "make", "set", "replace", "turn", "use"]
                 .contains(where: { command.contains($0) })
         if backgroundColorIntent {
@@ -789,6 +784,18 @@ final class QuickAssistantViewModel: ObservableObject {
                 return "Which color should I use? Try red, blue, white, black, or a hex color such as #4A90E2."
             }
             changeBackgroundColor(to: color)
+            return response
+        }
+
+        if let backgroundDescription {
+            editImageAttachment(initialBackgroundPrompt: backgroundDescription)
+            return response
+        }
+
+        if command.contains("background"),
+           ["remove", "erase", "delete", "cut out", "cutout", "get rid", "strip", "transparent", "isolate"]
+               .contains(where: { command.contains($0) }) {
+            removeBackgroundFromAttachment()
             return response
         }
 
@@ -872,9 +879,43 @@ final class QuickAssistantViewModel: ObservableObject {
             return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
         }
         if command == "help" || command == "what can you do" {
-            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, change a background color automatically, or remove the background. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
+            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, remove backgrounds, use another photo, or generate a described background with Image Playground. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
         }
         return nil
+    }
+
+    private func requestedBackgroundDescription(in request: String) -> String? {
+        let patterns = [
+            #"(?i)\bremove\s+(?:the\s+)?background\s+(?:and\s+)?replace\s+(?:it\s+)?with\s+(.+)$"#,
+            #"(?i)\b(?:replace|change|swap|set|make|turn|use)\s+(?:the\s+)?background\s+(?:with|to|into|as)\s+(.+)$"#,
+            #"(?i)\b(?:replace|change|swap|set|make|turn|use)\s+(?:the\s+)?background\s+(.+)$"#,
+        ]
+        for pattern in patterns {
+            guard let expression = try? NSRegularExpression(pattern: pattern),
+                  let match = expression.firstMatch(
+                    in: request,
+                    range: NSRange(request.startIndex..., in: request)
+                  ),
+                  match.numberOfRanges > 1,
+                  let range = Range(match.range(at: 1), in: request)
+            else { continue }
+            let description = request[range].trimmingCharacters(
+                in: .whitespacesAndNewlines.union(.punctuationCharacters)
+            )
+            let normalized = description.lowercased()
+            if !description.isEmpty,
+               !["transparent", "clear", "no background"].contains(normalized) {
+                return String(description)
+            }
+        }
+        return nil
+    }
+
+    private func isPlainColorDescription(_ description: String) -> Bool {
+        description.range(
+            of: #"(?i)^\s*(?:a\s+|an\s+)?(?:#[0-9a-f]{3}(?:[0-9a-f]{3})?|light\s+blue|dark\s+blue|navy(?:\s+blue)?|light\s+green|dark\s+green|light\s+gr[ae]y|dark\s+gr[ae]y|red|orange|yellow|green|mint|teal|cyan|aqua|blue|indigo|purple|violet|pink|magenta|brown|beige|cream|gr[ae]y|black|white)(?:\s+colou?r)?\s*$"#,
+            options: .regularExpression
+        ) != nil
     }
 
     private func calendarPrefill(from command: String) -> (title: String, date: Date?) {

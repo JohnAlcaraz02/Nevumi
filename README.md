@@ -119,8 +119,9 @@ After analysis, the attached-file toolbar provides these actions:
 | **Suggest a filename** | Suggests a descriptive filename based on the content |
 | **Enhance Photo** | Improves tone, color, noise, and detail locally while keeping the original untouched |
 | **Remove Background** | Isolates the foreground subject and saves it on a transparent background |
-| **Open Image Editor** | Erases or restores selected areas and replaces the background with transparency, a color, or blur |
+| **Open Image Editor** | Erases or restores selected areas and replaces the background with transparency, a color, blur, another photo, or an Apple Intelligence-generated scene |
 | **Change Background Color** | Type `change the background color to blue` (or use a hex color) to isolate the subject and save a recolored PNG automatically |
+| **Generate Background** | Type `replace the background with a quiet beach at sunset` to open Image Playground with that description, then approve a result to apply it |
 | **Convert** | Converts the attachment to a compatible output format and saves it where you choose |
 
 For an attached image, open the **Image** menu. Choose **Open Image Editor** (or type `edit image`) for background and object edits, or choose **Enhance Photo** (or type `enhance photo`) for an automatic cleanup. The editor and its automatic foreground detection work entirely on-device.
