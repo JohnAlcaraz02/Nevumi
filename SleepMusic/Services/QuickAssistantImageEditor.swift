@@ -25,6 +25,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
         case white
         case black
         case color
+        case photo
         case blurred
 
         var id: String { rawValue }
@@ -34,6 +35,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
             case .white: return "White"
             case .black: return "Black"
             case .color: return "Color"
+            case .photo: return "Photo"
             case .blurred: return "Blurred"
             }
         }
@@ -44,6 +46,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
     @Published var brushSize: CGFloat = 54
     @Published private(set) var backgroundStyle: BackgroundStyle = .transparent
     @Published private(set) var backgroundColor: Color = .indigo
+    @Published private(set) var backgroundPhotoName: String?
     @Published private(set) var isProcessing = false
     @Published private(set) var statusMessage = "Brush over anything you want to remove."
     @Published private(set) var canUndo = false
@@ -54,6 +57,7 @@ final class QuickAssistantImageEditorModel: ObservableObject {
     var onSaved: ((URL) -> Void)?
 
     private let originalImage: CGImage
+    private var backgroundPhoto: CGImage?
     private let maskContext: CGContext
     private let renderContext = CIContext(options: [.cacheIntermediates: false])
     private var undoStack: [CGImage] = []
@@ -91,6 +95,27 @@ final class QuickAssistantImageEditorModel: ObservableObject {
         backgroundColor = color
         backgroundStyle = .color
         refreshPreview(force: true)
+    }
+
+    func chooseBackgroundPhoto() {
+        guard !isProcessing else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Choose a Background Image"
+        panel.prompt = "Use as Background"
+        panel.allowedContentTypes = [.image]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+
+        guard panel.runModal() == .OK, let source = panel.url else { return }
+        do {
+            backgroundPhoto = try Self.loadNormalizedImage(from: source)
+            backgroundPhotoName = source.lastPathComponent
+            backgroundStyle = .photo
+            statusMessage = "Using \(source.lastPathComponent) as the background. Remove the original background to reveal it."
+            refreshPreview(force: true)
+        } catch {
+            statusMessage = "Couldn’t use that background image. " + error.localizedDescription
+        }
     }
 
     func beginStroke() {
@@ -353,6 +378,23 @@ final class QuickAssistantImageEditorModel: ObservableObject {
                 blue: nsColor.blueComponent,
                 alpha: 1
             )
+        case .photo:
+            guard let backgroundPhoto else {
+                return CIImage(color: .white).cropped(to: extent)
+            }
+            let image = CIImage(cgImage: backgroundPhoto)
+            let scale = max(
+                extent.width / image.extent.width,
+                extent.height / image.extent.height
+            )
+            let scaled = image.transformed(
+                by: CGAffineTransform(scaleX: scale, y: scale)
+            )
+            let translation = CGAffineTransform(
+                translationX: extent.midX - scaled.extent.midX,
+                y: extent.midY - scaled.extent.midY
+            )
+            return scaled.transformed(by: translation).cropped(to: extent)
         case .blurred:
             let radius = max(pixelSize.width, pixelSize.height) * 0.025
             return CIImage(cgImage: originalImage)
@@ -561,6 +603,18 @@ private struct QuickAssistantImageEditorView: View {
                         ),
                         supportsOpacity: false
                     )
+                }
+
+                if model.backgroundStyle == .photo {
+                    Button(action: model.chooseBackgroundPhoto) {
+                        Label(
+                            model.backgroundPhotoName.map { "Change \($0)" } ?? "Choose Image…",
+                            systemImage: "photo.on.rectangle"
+                        )
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .disabled(model.isProcessing)
                 }
             }
 
