@@ -997,6 +997,11 @@ final class QuickAssistantViewModel: ObservableObject {
             with: "by ",
             options: .regularExpression
         )
+        value = value.replacingOccurrences(
+            of: #"\s+"#,
+            with: " ",
+            options: .regularExpression
+        )
         value = value.trimmingCharacters(
             in: .whitespacesAndNewlines.union(.punctuationCharacters)
         )
