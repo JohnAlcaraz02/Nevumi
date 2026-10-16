@@ -113,6 +113,17 @@ struct QuickAssistantView: View {
                         Text("Keep History on This Mac")
                     }
                 }
+
+                Divider()
+
+                Button {
+                    onClose()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        LongScreenshotController.shared.start()
+                    }
+                } label: {
+                    Label("Capture Long Screenshot…", systemImage: "rectangle.expand.vertical")
+                }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 13, weight: .semibold))

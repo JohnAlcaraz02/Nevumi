@@ -23,6 +23,10 @@ struct MenuBarContentView: View {
         }
         .keyboardShortcut(.space, modifiers: .option)
 
+        Button("Capture Long Screenshot…") {
+            LongScreenshotController.shared.start()
+        }
+
         Divider()
 
         Toggle(

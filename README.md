@@ -35,6 +35,14 @@ The app is an accessory application, so it does not appear in the Dock.
 
 Press `⌥ Space` or choose **Open Quick Assistant** from the menu-bar menu. The assistant appears beneath the notch with its text field focused.
 
+### Long screenshots
+
+Choose **Capture Long Screenshot…** from the menu-bar menu or Quick Assistant's conversation menu, then drag over the scrollable area you want to capture. Scroll down through the content while the floating capture panel shows the stitched preview, section count, and current height. Select **Finish** to open the editor, where you can choose a background and copy or save the finished PNG. Select **Cancel** or press Escape during area selection to stop.
+
+The first capture asks for macOS Screen Recording access. SleepMusic captures only the selected region of its containing window, excludes the pointer and other windows, and processes the screenshot locally.
+
+Select the scrolling content itself, leaving fixed toolbars and sidebars outside the rectangle. Scroll downward slowly with overlapping sections and keep the window at the same size. Capture stops before 30,000 pixels or after 80 sections. If the panel asks you to slow down, scroll back to the last accepted position shown in the preview and continue in smaller steps.
+
 ### Spotify commands
 
 | Action | Accepted commands |
@@ -214,6 +222,7 @@ Press any key or click to dismiss Sleep Mode.
 - Current Spotify track and artist, or `Not Playing`
 - **Enter Sleep Mode**
 - **Open Quick Assistant**
+- **Capture Long Screenshot…**
 - **Launch at Login**
 - **Quit SleepMusic**
 
@@ -224,6 +233,7 @@ Press any key or click to dismiss Sleep Mode.
 - General assistant responses use Apple's on-device model when available.
 - Conversation history is not persisted unless **Keep History on This Mac** is enabled; saved history remains local.
 - Clipboard text is read only for assistant requests that mention `clipboard`.
+- Long screenshots require Screen Recording access and are processed locally.
 - Lyrics and artwork require network access.
 - SleepMusic's lock-screen surface never reads or intercepts password input.
 

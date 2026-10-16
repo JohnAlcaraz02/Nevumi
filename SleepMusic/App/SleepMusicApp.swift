@@ -26,3 +26,4 @@ struct SleepMusicApp: App {
         .menuBarExtraStyle(.menu)
     }
 }
+

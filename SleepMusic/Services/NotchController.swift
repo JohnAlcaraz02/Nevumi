@@ -154,7 +154,7 @@ private struct NotchCompactLeadingView: View {
 
     var body: some View {
         EqualizerIcon(isAnimating: state.isPlaying)
-            .foregroundStyle(.green)
+            .foregroundStyle(.white)
             .frame(width: 14, height: 14)
     }
 }

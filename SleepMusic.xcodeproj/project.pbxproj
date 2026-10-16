@@ -29,6 +29,7 @@
 		9677D9F928D32989565C83EA /* AudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */; };
 		9D9FC6028C04F83706ADD811 /* SleepMusicApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73992593D2BFAF5F8FF83470 /* SleepMusicApp.swift */; };
 		A7DD5B89282180349C403253 /* AudioCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0773BE56ED4A97032993C40D /* AudioCategory.swift */; };
+		A91C5D670000000000000001 /* LongScreenshotController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A91C5D670000000000000002 /* LongScreenshotController.swift */; };
 		AC1E6AFB7E07FC2242466FA8 /* SleepOverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */; };
 		B0B02813C1A2E96FB8D52536 /* QuickAssistantImageEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8051550FD96EBDA041BDB8FB /* QuickAssistantImageEditor.swift */; };
 		B201BBA47E18E24E69637FED /* LoginItemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19D030E2BC090D0B0CFEE908 /* LoginItemManager.swift */; };
@@ -73,6 +74,7 @@
 		A4B99D3FE829995AC99FABBB /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		A67B13BB126EE33B7DCE4EE9 /* NotchFileDropController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchFileDropController.swift; sourceTree = "<group>"; };
 		A8663C5C42551701DD7E367B /* QuickAssistantBackgroundRemover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantBackgroundRemover.swift; sourceTree = "<group>"; };
+		A91C5D670000000000000002 /* LongScreenshotController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongScreenshotController.swift; sourceTree = "<group>"; };
 		B732689907127D5C0D6FC690 /* AirDropSharingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AirDropSharingService.swift; sourceTree = "<group>"; };
 		B73AD237704CA196127A417A /* GlobalHotKeyController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalHotKeyController.swift; sourceTree = "<group>"; };
 		BB3F074C7F6D50F0C7F3ACCE /* SleepOverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayController.swift; sourceTree = "<group>"; };
@@ -158,6 +160,7 @@
 		F46508872FDF7211FF2AE49C /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				A91C5D670000000000000002 /* LongScreenshotController.swift */,
 				B732689907127D5C0D6FC690 /* AirDropSharingService.swift */,
 				7C1126AF67089FD167627A33 /* ArtworkPalette.swift */,
 				4BA3F899A556A2FFFFBDC1C2 /* AudioEngine.swift */,
@@ -196,13 +199,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		"TEMP_80CDC1EE-5627-4C91-8EFA-BB6288F9BFCA" /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -235,11 +231,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-					DB825FAB160159E0C5C8C7FD = {
-						ProvisioningStyle = Automatic;
-					};
-				};
 			};
 			buildConfigurationList = DE9137658FD3171EDD3E6A05 /* Build configuration list for PBXProject "SleepMusic" */;
 			developmentRegion = en;
@@ -280,6 +271,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A91C5D670000000000000001 /* LongScreenshotController.swift in Sources */,
 				794DB94FD4394670ADEB6E25 /* AirDropSharingService.swift in Sources */,
 				3C5E15E06B3AFF7FE795C124 /* AmbientBackground.swift in Sources */,
 				DF89D33D12BEB8472E58C3B5 /* AppCoordinator.swift in Sources */,
@@ -380,9 +372,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Generated/SleepMusic.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Generated/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -392,6 +387,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnalcaraz.SleepMusic;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
@@ -402,9 +398,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Generated/SleepMusic.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Generated/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -414,6 +413,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnalcaraz.SleepMusic;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.0;
 			};
