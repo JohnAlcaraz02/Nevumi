@@ -53,5 +53,10 @@ schemes:
         Nevumi: all
     run:
       config: Debug
+      preActions:
+        - name: Update Nevumi in Applications
+          settingsTarget: Nevumi
+          script: |
+            /usr/bin/xcrun swift "$SRCROOT/scripts/install-development-app.swift"
     archive:
       config: Release

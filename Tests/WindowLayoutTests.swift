@@ -37,11 +37,13 @@ struct WindowLayoutTests {
                      == CGRect(x: 713, y: 338, width: 800, height: 600))
 
         let shortcuts = WindowAction.allCases.map(\.defaultShortcut)
-        precondition(Set(shortcuts.map(\.keyCode)).count == 5)
+        precondition(Set(shortcuts.map(\.keyCode)).count == 6)
         precondition(shortcuts.allSatisfy { $0.modifiers == UInt32(controlKey | optionKey) })
         precondition(WindowAction.left.defaultShortcut.label == "⌃⌥←")
         precondition(WindowAction.focusOther.defaultShortcut.keyCode == UInt32(kVK_Tab))
         precondition(WindowAction.focusOther.defaultShortcut.label == "⌃⌥⇥")
+        precondition(WindowAction.longScreenshot.defaultShortcut.keyCode == UInt32(kVK_ANSI_S))
+        precondition(WindowAction.longScreenshot.defaultShortcut.label == "⌃⌥S")
         let display = [desktop]
         precondition(WindowLayout.isOnSameDisplay(right, focused: left, screens: display))
         precondition(WindowLayout.isOnSameDisplay(left, focused: right, screens: display))

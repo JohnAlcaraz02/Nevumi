@@ -29,7 +29,7 @@ struct MenuBarContentView: View {
 
         Divider()
 
-        Button("Window Shortcuts…") {
+        Button("Keyboard Shortcuts…") {
             coordinator.windowManagement.showSettings()
         }
 

@@ -9,10 +9,10 @@ struct WindowShortcutsSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text("Window Shortcuts").font(.title2.bold())
-            Text("Move, resize, and switch between windows from any app.")
+            Text("Keyboard Shortcuts").font(.title2.bold())
+            Text("Control windows and capture long screenshots from any app.")
                 .foregroundStyle(.secondary)
-            Toggle("Enable window shortcuts", isOn: $controller.isEnabled)
+            Toggle("Enable these shortcuts", isOn: $controller.isEnabled)
             Divider()
             ForEach(WindowAction.allCases) { action in
                 HStack {
@@ -46,6 +46,8 @@ struct WindowShortcutsSettingsView: View {
             }
             Text("Full-screen windows must leave full screen first. Some apps limit how small their windows can be.")
                 .font(.caption).foregroundStyle(.secondary)
+            Text("Long screenshots use Screen Recording access. Accessibility is needed only for window control.")
+                .font(.caption).foregroundStyle(.secondary)
             HStack {
                 Spacer()
                 Button("Restore Default Shortcuts") { controller.resetShortcuts() }
@@ -68,7 +70,7 @@ private struct WindowShortcutRecorder: NSViewRepresentable {
         let button = ShortcutRecordButton()
         button.bezelStyle = .rounded
         button.font = .monospacedSystemFont(ofSize: 13, weight: .medium)
-        button.setAccessibilityLabel("Record window shortcut")
+        button.setAccessibilityLabel("Record keyboard shortcut")
         return button
     }
 

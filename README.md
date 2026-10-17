@@ -26,11 +26,18 @@ The built-in Spotify and Sleep Mode commands still work when Apple Intelligence 
 
 The app is an accessory application, so it does not appear in the Dock.
 
+### Keep the installed app up to date during development
+
+Press **Run (⌘ R)** using the **Nevumi** scheme in Xcode. After the build completes, the scheme automatically copies the finished app to **`/Applications/Nevumi.app`** before launching the debug build. If the Applications copy is running, it is asked to quit first. Opening Nevumi from Applications afterward uses that same updated build, so you no longer need to copy it manually.
+
+This is a local development install step; it runs when you use Xcode Run, including when the build is already up to date. A plain Build, Archive, or release packaging does not install the app. The installer preserves the build’s signature and leaves preferences and conversation history in place. If Nevumi refuses to quit, quit it manually and run again. If Applications is not writable, check the Run pre-action’s error in Xcode’s Report navigator. Ad-hoc signed builds may still need permissions granted again after rebuilding; use a consistent Apple Development signing identity and team for development when available.
+
 ## Keyboard shortcuts
 
 | Shortcut | Action |
 | --- | --- |
 | `⌥ Space` | Open or close Quick Assistant from anywhere |
+| `⌃ ⌥ S` | Start a long screenshot capture from anywhere |
 | `⌃ ⌥ ←` | Fit the focused window to the left half of its display |
 | `⌃ ⌥ →` | Fit the focused window to the right half of its display |
 | `⌃ ⌥ ↑` | Maximize the focused window within the desktop |
@@ -40,11 +47,11 @@ The app is an accessory application, so it does not appear in the Dock.
 | `Esc` | Close Quick Assistant |
 | Any key or click | Leave Sleep Mode |
 
-Choose **Window Shortcuts…** from Nevumi’s menu to enable or disable window shortcuts, record custom key combinations, or restore the defaults. Preferences persist across launches. If a key combination is unavailable, choose another one; Option–Space stays reserved for Quick Assistant.
+Choose **Keyboard Shortcuts…** from Nevumi’s menu to enable or disable window and long-screenshot shortcuts, record custom key combinations, or restore the defaults. Preferences persist across launches. If a key combination is unavailable, choose another one; Option–Space stays reserved for Quick Assistant.
 
-Window control needs **System Settings → Privacy & Security → Accessibility → Nevumi**. Use **Allow Access…** in Window Shortcuts to open that setting, then return to the target app and try the shortcut. Windows use their current display’s available desktop area, leaving room for the menu bar and Dock. Restore history lasts for the current Nevumi session. Exit full screen before using these shortcuts; some apps enforce a minimum window size or do not support resizing.
+Window control needs **System Settings → Privacy & Security → Accessibility → Nevumi**. Use **Allow Access…** in Keyboard Shortcuts to open that setting, then return to the target app and try the shortcut. Windows use their current display’s available desktop area, leaving room for the menu bar and Dock. Restore history lasts for the current Nevumi session. Exit full screen before using these shortcuts; some apps enforce a minimum window size or do not support resizing.
 
-**Switch between windows:** Press **Control–Option–Tab** to focus another window on the same display so you can type or use its keyboard commands. With two windows, press it again to switch back. Windows can have different widths and heights, partially overlap, or sit fully on top of each other; they keep their positions and sizes. This works with windows of one app or different apps, such as VS Code and Xcode. Nevumi picks the next frontmost eligible desktop window on the current display; minimized and full-screen windows are skipped. If no other window is available, Nevumi asks you to open one. Customize the shortcut in **Window Shortcuts…**.
+**Switch between windows:** Press **Control–Option–Tab** to focus another window on the same display so you can type or use its keyboard commands. With two windows, press it again to switch back. Windows can have different widths and heights, partially overlap, or sit fully on top of each other; they keep their positions and sizes. This works with windows of one app or different apps, such as VS Code and Xcode. Nevumi picks the next frontmost eligible desktop window on the current display; minimized and full-screen windows are skipped. If no other window is available, Nevumi asks you to open one. Customize the shortcut in **Keyboard Shortcuts…**.
 
 ## Quick Assistant
 
@@ -52,7 +59,7 @@ Press `⌥ Space` or choose **Open Quick Assistant** from the menu-bar menu. The
 
 ### Long screenshots
 
-Choose **Capture Long Screenshot…** from the menu-bar menu or Quick Assistant's conversation menu, then drag over the scrollable area you want to capture. Scroll down through the content while the floating capture panel shows the stitched preview, section count, and current height. Select **Finish** to open the editor, where you can choose a background and copy or save the finished PNG. Select **Cancel** or press Escape during area selection to stop.
+Press **Control–Option–S** from any app, or choose **Capture Long Screenshot…** from the menu-bar menu or Quick Assistant's conversation menu, then drag over the scrollable area you want to capture. Customize the shortcut in **Keyboard Shortcuts…**. The capture shortcut needs Screen Recording access; it does not require Accessibility access. Scroll down through the content while the floating capture panel shows the stitched preview, section count, and current height. Select **Finish** to open the editor, where you can choose a background and copy or save the finished PNG. Select **Cancel** or press Escape during area selection to stop.
 
 The first capture asks for macOS Screen Recording access. Nevumi captures only the selected region of its containing window, excludes the pointer and other windows, and processes the screenshot locally.
 

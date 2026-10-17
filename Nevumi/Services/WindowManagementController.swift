@@ -6,6 +6,7 @@ import SwiftUI
 enum WindowAction: UInt32, CaseIterable, Identifiable {
     case left = 1, right, maximize, restore
     case focusOther = 6
+    case longScreenshot = 7
     var id: UInt32 { rawValue }
     var title: String {
         switch self {
@@ -14,6 +15,7 @@ enum WindowAction: UInt32, CaseIterable, Identifiable {
         case .maximize: return "Maximize"
         case .restore: return "Restore previous size"
         case .focusOther: return "Focus other window"
+        case .longScreenshot: return "Capture long screenshot"
         }
     }
     var defaultShortcut: WindowShortcut {
@@ -24,9 +26,10 @@ enum WindowAction: UInt32, CaseIterable, Identifiable {
         case .maximize: key = kVK_UpArrow
         case .restore: key = kVK_DownArrow
         case .focusOther: key = kVK_Tab
+        case .longScreenshot: key = kVK_ANSI_S
         }
         return WindowShortcut(keyCode: UInt32(key), modifiers: UInt32(controlKey | optionKey),
-                              keyLabel: [.left: "←", .right: "→", .maximize: "↑", .restore: "↓", .focusOther: "⇥"][self]!)
+                              keyLabel: [.left: "←", .right: "→", .maximize: "↑", .restore: "↓", .focusOther: "⇥", .longScreenshot: "S"][self]!)
     }
 }
 
@@ -104,6 +107,7 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
     @Published private(set) var shortcuts: [WindowAction: WindowShortcut] = [:]
     @Published private(set) var status = ""
     private let defaults: UserDefaults
+    private let captureLongScreenshot: () -> Void
     private var hotKeys: [EventHotKeyRef] = []
     private var handler: EventHandlerRef?
     private var settingsWindow: NSWindow?
@@ -115,8 +119,9 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
     }
     private var savedWindows: [SavedWindow] = []
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, captureLongScreenshot: @escaping () -> Void = {}) {
         self.defaults = defaults
+        self.captureLongScreenshot = captureLongScreenshot
         isEnabled = defaults.object(forKey: "windowShortcutsEnabled") as? Bool ?? true
         super.init()
         for action in WindowAction.allCases {
@@ -128,7 +133,7 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
         let result = InstallEventHandler(GetApplicationEventTarget(), windowShortcutHandler, 1, &type,
                                         Unmanaged.passUnretained(self).toOpaque(), &handler)
         if result == noErr { registerShortcuts() }
-        else { status = "Window shortcuts couldn’t start. Restart Nevumi to try again." }
+        else { status = "Keyboard shortcuts couldn’t start. Restart Nevumi to try again." }
     }
 
     deinit {
@@ -200,7 +205,7 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
         if settingsWindow == nil {
             let controller = NSHostingController(rootView: WindowShortcutsSettingsView(controller: self))
             let window = NSWindow(contentViewController: controller)
-            window.title = "Window Shortcuts"
+            window.title = "Keyboard Shortcuts"
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isReleasedWhenClosed = false
             window.delegate = self
@@ -227,6 +232,10 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
 
     func perform(_ action: WindowAction) {
         guard isEnabled, !isRecordingShortcut else { return }
+        if action == .longScreenshot {
+            captureLongScreenshot()
+            return
+        }
         guard AXIsProcessTrusted() else {
             showMessage("Allow window control", "Enable Nevumi in System Settings → Privacy & Security → Accessibility, then try the shortcut again.", permission: true)
             return

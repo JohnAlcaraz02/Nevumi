@@ -51,6 +51,24 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Update Nevumi in Applications"
+               scriptText = "/usr/bin/xcrun swift &quot;$SRCROOT/scripts/install-development-app.swift&quot;&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "0761D399AA884B013EB96EC9"
+                     BuildableName = "Nevumi.app"
+                     BlueprintName = "Nevumi"
+                     ReferencedContainer = "container:Nevumi.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
