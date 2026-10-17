@@ -51,13 +51,17 @@ Select the scrolling content itself, leaving fixed toolbars and sidebars outside
 
 | Action | Accepted commands |
 | --- | --- |
-| Toggle playback | `play`, `pause`, `play or pause`, `toggle music`, `toggle playback` |
+| Open Spotify | `open Spotify`, `launch Spotify` |
+| Start or resume music | `play`, `play music`, `resume`, `open Spotify and play music` |
+| Pause music | `pause`, `pause music`, `pause Spotify` |
+| Toggle playback | `play or pause`, `toggle music`, `toggle playback` |
 | Next track | `next`, `next song`, `skip`, `skip song`, `skip track` |
 | Previous track | `previous`, `previous song`, `previous track`, `go back` |
 | Show current track | `what song is playing?`, `what is playing?`, `now playing` |
-| Search and play | `play Buwan by Juan Karlos on Spotify`, `put on Here Comes the Sun` |
+| Open song search | `play Buwan by Juan Karlos on Spotify`, `put on Here Comes the Sun` |
 
 Spotify commands are processed locally and do not require Apple Intelligence.
+Opening or playing music launches Spotify if it is closed. Play resumes Spotify’s current queue and leaves already playing music running; pause always pauses. If Spotify has no playable queue, choose a song or playlist first. Requests for a song by name open Spotify search results, where you choose a result to play.
 
 ### Sleep Mode commands
 

@@ -407,6 +407,7 @@ final class QuickAssistantViewModel: ObservableObject {
         appendMessage(role: .user, text: request)
 
         if handleConversionCommand(request) { return }
+        if handleSpotifyCommand(request) { return }
 
         if let localResponse = performLocalCommand(request) {
             if !isBusy {
@@ -416,7 +417,7 @@ final class QuickAssistantViewModel: ObservableObject {
         }
 
         guard SystemLanguageModel.default.isAvailable else {
-            presentResponse("Apple Intelligence is unavailable on this Mac. You can still say “play or pause,” “next song,” “previous song,” “what song is playing,” or “enter sleep mode.”")
+            presentResponse("Apple Intelligence is unavailable on this Mac. You can still say “open Spotify,” “play music,” “pause,” “next song,” “what song is playing,” or “enter sleep mode.”")
             return
         }
 
@@ -908,10 +909,6 @@ final class QuickAssistantViewModel: ObservableObject {
             return response
         }
 
-        if ["play", "pause", "play or pause", "toggle music", "toggle playback"].contains(command) {
-            spotify.togglePlayPause()
-            return "Spotify playback toggled."
-        }
         if ["next", "next song", "skip", "skip song", "skip track"].contains(command) {
             spotify.skipToNext()
             return "Skipping to the next Spotify track."
@@ -931,13 +928,8 @@ final class QuickAssistantViewModel: ObservableObject {
             guard let track = spotify.nowPlaying else { return "Spotify isn’t playing anything right now." }
             return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
         }
-        if let spotifySearch = requestedSpotifySearch(in: request) {
-            return spotify.playSearch(spotifySearch)
-                ? "Playing the top Spotify result for “\(spotifySearch)”."
-                : "I couldn’t ask Spotify to play “\(spotifySearch)”. Check that Spotify is open and Automation access is allowed."
-        }
         if command == "help" || command == "what can you do" {
-            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, remove backgrounds, use another photo, or generate a described background with Image Playground. I can also summarize clipboard text, control Spotify, check the current song, and enter Sleep Mode."
+            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, remove backgrounds, use another photo, or generate a described background with Image Playground. I can also summarize clipboard text, open Spotify, play or pause music, search for songs, check the current song, and enter Sleep Mode. Try “open Spotify and play music.”"
         }
         return nil
     }
@@ -970,6 +962,36 @@ final class QuickAssistantViewModel: ObservableObject {
             }
         }
         return nil
+    }
+
+    private func handleSpotifyCommand(_ request: String) -> Bool {
+        let command = AssistantSpotifyCommand(request: request)
+        let search = command == nil ? requestedSpotifySearch(in: request) : nil
+        guard command != nil || search != nil else { return false }
+        isWorking = true
+        requestTask = Task { [weak self] in
+            guard let self else { return }
+            defer { isWorking = false }
+            do {
+                let result: String
+                if let command {
+                    result = try await spotify.perform(command)
+                } else if let search {
+                    try await spotify.openSearch(search)
+                    result = "Opened Spotify results for “\(search)”. Choose a song to play."
+                } else {
+                    return
+                }
+                guard !Task.isCancelled else { return }
+                presentResponse(result)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard !Task.isCancelled else { return }
+                presentResponse(error.localizedDescription)
+            }
+        }
+        return true
     }
 
     private func requestedSpotifySearch(in request: String) -> String? {
