@@ -1,7 +1,7 @@
 import AppKit
 
-// Run with swiftc -module-cache-path /tmp/sleepmusic-swift-module-cache
-// SleepMusic/Services/LongScreenshotController.swift
+// Run with swiftc -module-cache-path /tmp/nevumi-swift-module-cache
+// Nevumi/Services/LongScreenshotController.swift
 // Tests/LongScreenshotStitcherTests.swift -o /tmp/long-screenshot-tests
 @main
 struct LongScreenshotStitcherTests {

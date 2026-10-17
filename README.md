@@ -1,6 +1,6 @@
-# SleepMusic
+# Nevumi
 
-SleepMusic is a macOS menu-bar app that turns the MacBook notch into a compact Spotify player, synchronized lyric display, Sleep Mode surface, and on-device Quick Assistant.
+Nevumi is a macOS menu-bar app that turns the MacBook notch into a compact Spotify player, synchronized lyric display, Sleep Mode surface, and on-device Quick Assistant.
 
 ## Requirements
 
@@ -14,11 +14,11 @@ The built-in Spotify and Sleep Mode commands still work when Apple Intelligence 
 
 ## Getting started
 
-1. Open `SleepMusic.xcodeproj` in Xcode.
-2. Select the `SleepMusic` scheme and `My Mac` destination.
+1. Open `Nevumi.xcodeproj` in Xcode.
+2. Select the `Nevumi` scheme and `My Mac` destination.
 3. Build and run the app.
 4. Allow Automation access when macOS asks for permission to control Spotify.
-5. Look for the moon icon in the menu bar.
+5. Look for the Nevumi ribbon icon in the menu bar.
 
 The app is an accessory application, so it does not appear in the Dock.
 
@@ -39,7 +39,7 @@ Press `⌥ Space` or choose **Open Quick Assistant** from the menu-bar menu. The
 
 Choose **Capture Long Screenshot…** from the menu-bar menu or Quick Assistant's conversation menu, then drag over the scrollable area you want to capture. Scroll down through the content while the floating capture panel shows the stitched preview, section count, and current height. Select **Finish** to open the editor, where you can choose a background and copy or save the finished PNG. Select **Cancel** or press Escape during area selection to stop.
 
-The first capture asks for macOS Screen Recording access. SleepMusic captures only the selected region of its containing window, excludes the pointer and other windows, and processes the screenshot locally.
+The first capture asks for macOS Screen Recording access. Nevumi captures only the selected region of its containing window, excludes the pointer and other windows, and processes the screenshot locally.
 
 Select the scrolling content itself, leaving fixed toolbars and sidebars outside the rectangle. Scroll downward slowly with overlapping sections and keep the window at the same size. Capture stops before 30,000 pixels or after 80 sections. If the panel asks you to slow down, scroll back to the last accepted position shown in the preview and continue in smaller steps.
 
@@ -96,13 +96,13 @@ Quick Assistant keeps the current conversation visible as user and assistant mes
 
 Assistant responses can be copied, saved as plain text, shared, or retried. Choose **New Conversation** from the conversation menu to clear the current thread and its attachments.
 
-Conversation history is kept in memory for the current app session by default. To restore it after relaunching SleepMusic, enable **Keep History on This Mac** from the conversation menu. This opt-in history is stored locally and can be removed by turning the option off or starting a new conversation.
+Conversation history is kept in memory for the current app session by default. To restore it after relaunching Nevumi, enable **Keep History on This Mac** from the conversation menu. This opt-in history is stored locally and can be removed by turning the option off or starting a new conversation.
 
 ### Calendar notes
 
 Click the calendar button in Quick Assistant, choose **Add calendar note**, or type a command such as `add dentist appointment to my calendar tomorrow at 3 PM`. Review the title, optional notes, date, time, all-day setting, and duration before saving to the default macOS calendar.
 
-Calendar access is requested only when the first entry is saved. SleepMusic requests write-only access and cannot read existing calendar events. Creating entries works offline when the destination calendar is stored locally; cloud calendars sync when their service is available.
+Calendar access is requested only when the first entry is saved. Nevumi requests write-only access and cannot read existing calendar events. Creating entries works offline when the destination calendar is stored locally; cloud calendars sync when their service is available.
 
 ### Intelligent file drop
 
@@ -180,7 +180,7 @@ Remove all attached files with the close button in the attachment toolbar.
 
 ## Notch player
 
-When Spotify opens, SleepMusic displays a compact indicator around the physical MacBook notch. Hover over it to expand the full player.
+When Spotify opens, Nevumi displays a compact indicator around the physical MacBook notch. Hover over it to expand the full player.
 
 The expanded player includes:
 
@@ -198,7 +198,7 @@ The notch automatically hides when Spotify closes.
 
 ## Lyrics
 
-SleepMusic fetches synchronized lyrics from LRCLIB and follows Spotify's estimated playback position. The current line appears in the expanded notch player and in Sleep Mode.
+Nevumi fetches synchronized lyrics from LRCLIB and follows Spotify's estimated playback position. The current line appears in the expanded notch player and in Sleep Mode.
 
 Lyrics depend on a matching synchronized entry being available for the current track.
 
@@ -211,7 +211,7 @@ You can start it from:
 - The menu-bar command **Enter Sleep Mode**
 - Quick Assistant using a command containing `sleep mode`
 
-SleepMusic also observes screen lock, unlock, sleep, and wake events while music is playing. While locked, it presents a click-through player that does not intercept password input and temporarily prevents idle display/system sleep. Forced sleep from closing the lid, choosing Sleep, low battery, or thermal protection is always respected.
+Nevumi also observes screen lock, unlock, sleep, and wake events while music is playing. While locked, it presents a click-through player that does not intercept password input and temporarily prevents idle display/system sleep. Forced sleep from closing the lid, choosing Sleep, low battery, or thermal protection is always respected.
 
 Lock-screen placement uses the private SkyLight window-space API through the pinned SkyLightWindow package. This is the same class of mechanism used by dedicated macOS lock-screen widget apps, but it can require maintenance after major macOS updates.
 
@@ -224,7 +224,7 @@ Press any key or click to dismiss Sleep Mode.
 - **Open Quick Assistant**
 - **Capture Long Screenshot…**
 - **Launch at Login**
-- **Quit SleepMusic**
+- **Quit Nevumi**
 
 ## Privacy and permissions
 
@@ -235,12 +235,12 @@ Press any key or click to dismiss Sleep Mode.
 - Clipboard text is read only for assistant requests that mention `clipboard`.
 - Long screenshots require Screen Recording access and are processed locally.
 - Lyrics and artwork require network access.
-- SleepMusic's lock-screen surface never reads or intercepts password input.
+- Nevumi's lock-screen surface never reads or intercepts password input.
 
 ## Project structure
 
 ```text
-SleepMusic/
+Nevumi/
 ├── App/          App entry point and service coordinator
 ├── Models/       Audio and lyric data types
 ├── Services/     Spotify, lyrics, assistant, hotkey, audio, and window services
@@ -258,10 +258,16 @@ Command-line build:
 
 ```sh
 xcodebuild \
-  -project SleepMusic.xcodeproj \
-  -scheme SleepMusic \
+  -project Nevumi.xcodeproj \
+  -scheme Nevumi \
   -configuration Debug \
   -destination 'platform=macOS' \
   CODE_SIGNING_ALLOWED=NO \
   build
 ```
+
+## Branding
+
+Nevumi uses the lavender ribbon app icon and a vector template mark that adapts to the menu bar’s appearance. Run `swift scripts/generate-brand-assets.swift` from the repository root to regenerate the assets. The approved logo mockup is in `Branding/Nevumi-logo-concept.png`.
+
+The source folder, Xcode project, target, scheme and built product are named Nevumi. The legacy bundle identifier and local storage folder remain stable to preserve existing settings and data.

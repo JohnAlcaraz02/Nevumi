@@ -1,4 +1,4 @@
-name: SleepMusic
+name: Nevumi
 options:
   bundleIdPrefix: com.johnalcaraz
 packages:
@@ -9,17 +9,18 @@ packages:
     url: https://github.com/Lakr233/SkyLightWindow
     exactVersion: 1.0.0
 targets:
-  SleepMusic:
+  Nevumi:
     type: application
     platform: macOS
     deploymentTarget: "26.0"
     sources:
-      - path: SleepMusic
+      - path: Nevumi
     dependencies:
       - package: DynamicNotchKit
       - package: SkyLightWindow
     settings:
       base:
+        PRODUCT_NAME: Nevumi
         PRODUCT_BUNDLE_IDENTIFIER: com.johnalcaraz.SleepMusic
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: "1"
@@ -30,16 +31,25 @@ targets:
     info:
       path: Generated/Info.plist
       properties:
-        CFBundleDisplayName: Sleep Music
+        CFBundleDisplayName: Nevumi
         NSHumanReadableCopyright: "Personal use only"
-        NSAppleEventsUsageDescription: "Sleep Music reads the currently playing track from Spotify to show it as Now Playing."
-        NSCalendarsWriteOnlyAccessUsageDescription: "Sleep Music adds the calendar notes and events you create in Quick Assistant."
+        NSAppleEventsUsageDescription: "Nevumi reads the currently playing track from Spotify to show it as Now Playing."
+        NSCalendarsWriteOnlyAccessUsageDescription: "Nevumi adds the calendar notes and events you create in Quick Assistant."
         LSUIElement: true
     entitlements:
-      path: Generated/SleepMusic.entitlements
+      path: Generated/Nevumi.entitlements
       properties:
         com.apple.security.app-sandbox: false
         com.apple.security.files.user-selected.read-only: true
         com.apple.security.files.bookmarks.app-scope: true
         com.apple.security.network.client: true
         com.apple.security.automation.apple-events: true
+schemes:
+  Nevumi:
+    build:
+      targets:
+        Nevumi: all
+    run:
+      config: Debug
+    archive:
+      config: Release
