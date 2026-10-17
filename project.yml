@@ -22,8 +22,8 @@ targets:
       base:
         PRODUCT_NAME: Nevumi
         PRODUCT_BUNDLE_IDENTIFIER: com.johnalcaraz.SleepMusic
-        MARKETING_VERSION: "0.1"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "0.1.1"
+        CURRENT_PROJECT_VERSION: "2"
         SWIFT_VERSION: "5.0"
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_HARDENED_RUNTIME: YES
@@ -32,6 +32,8 @@ targets:
       path: Generated/Info.plist
       properties:
         CFBundleDisplayName: Nevumi
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSHumanReadableCopyright: "Personal use only"
         NSAppleEventsUsageDescription: "Nevumi reads the currently playing track from Spotify to show it as Now Playing."
         NSCalendarsWriteOnlyAccessUsageDescription: "Nevumi adds the calendar notes and events you create in Quick Assistant."

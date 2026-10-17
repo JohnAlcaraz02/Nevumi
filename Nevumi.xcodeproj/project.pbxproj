@@ -199,7 +199,7 @@
 			path = Nevumi;
 			sourceTree = "<group>";
 		};
-		"TEMP_129DDB02-4EA0-4077-A0E2-F619403E2344" /* Resources */ = {
+		"TEMP_8F4F8FBF-5D77-417A-9218-409E0A7A6C0D" /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -386,7 +386,7 @@
 				CODE_SIGN_ENTITLEMENTS = Generated/Nevumi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Generated/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -394,7 +394,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnalcaraz.SleepMusic;
 				PRODUCT_NAME = Nevumi;
 				SDKROOT = macosx;
@@ -409,7 +409,7 @@
 				CODE_SIGN_ENTITLEMENTS = Generated/Nevumi.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Generated/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -417,7 +417,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 0.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.johnalcaraz.SleepMusic;
 				PRODUCT_NAME = Nevumi;
 				SDKROOT = macosx;
