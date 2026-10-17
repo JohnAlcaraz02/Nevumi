@@ -26,6 +26,7 @@
 		67FFEB8982F3B2C30C266A0B /* QuickAssistantFileConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A45A784D19CC2BA76B3337 /* QuickAssistantFileConverter.swift */; };
 		6F1E729A5EDE0F41A7A81C45 /* QuickAssistantCalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C592846A83A7379C2E80F9C /* QuickAssistantCalendarService.swift */; };
 		809C30BB305B2A1C584E3EA9 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5765FEC97B81300FC03E176 /* AppCoordinator.swift */; };
+		83DC37B54141E0715B05AFF8 /* WindowShortcutsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BBAFF01529F066CB7EE0D03 /* WindowShortcutsSettingsView.swift */; };
 		87E9A7D045FF87DA046F188C /* ArtworkPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7035DC875A2AE3F363A0974B /* ArtworkPalette.swift */; };
 		8B55A80BCE30AACA1976B073 /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E27F9B2EA39B76D2EA7ACB37 /* PlayerViewModel.swift */; };
 		8B62160A12E27DF2BB1A642A /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C655496EF920E0027D051E /* StorageService.swift */; };
@@ -38,6 +39,7 @@
 		BA6D9956CE013946AF671A51 /* NotchFileDropController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD281000522BA21BA5A2F83F /* NotchFileDropController.swift */; };
 		BB28DA9E3E8C01FE5B71BEED /* NotchConvertCardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 770E36DB192C699B38B105D8 /* NotchConvertCardController.swift */; };
 		C493D87E7585A3B171633D4F /* LyricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 157F37B8DB884E98D1FA9895 /* LyricsService.swift */; };
+		DCF9281766C6BC87727DFE71 /* WindowManagementController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1569258B87FCFD7698FAEEF9 /* WindowManagementController.swift */; };
 		E33DFEEABA69F0253A516692 /* AudioCategory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D9B4A8B91890A36F4A1FB62 /* AudioCategory.swift */; };
 		E371265BD9B97C0FB5C2D1C9 /* EqualizerIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360F8FB5023047032BAF16A8 /* EqualizerIcon.swift */; };
 		E7F20CCF7B3EFC3EE2964FEC /* NevumiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC5C3A46AF29550A6BB3B9F9 /* NevumiApp.swift */; };
@@ -52,6 +54,7 @@
 		010CC531E9000F54EA79BDC0 /* SleepOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SleepOverlayView.swift; sourceTree = "<group>"; };
 		0937F3B7B053B3BE0600A2DD /* QuickAssistantOutputActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantOutputActions.swift; sourceTree = "<group>"; };
 		0C6A9E6C4DBDE7767A606EC4 /* QuickAssistantImageEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantImageEditor.swift; sourceTree = "<group>"; };
+		1569258B87FCFD7698FAEEF9 /* WindowManagementController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagementController.swift; sourceTree = "<group>"; };
 		157F37B8DB884E98D1FA9895 /* LyricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsService.swift; sourceTree = "<group>"; };
 		1C592846A83A7379C2E80F9C /* QuickAssistantCalendarService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantCalendarService.swift; sourceTree = "<group>"; };
 		299B8187D1B35BAC3E51F923 /* AmbientBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientBackground.swift; sourceTree = "<group>"; };
@@ -72,6 +75,7 @@
 		91ED35B12E9797C5B1F0D76D /* QuickAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantView.swift; sourceTree = "<group>"; };
 		9631BB6CFD78EAD9FB5B76F6 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		9851E99E665A770C4ACEE0FE /* NotchController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchController.swift; sourceTree = "<group>"; };
+		9BBAFF01529F066CB7EE0D03 /* WindowShortcutsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowShortcutsSettingsView.swift; sourceTree = "<group>"; };
 		AC5C3A46AF29550A6BB3B9F9 /* NevumiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NevumiApp.swift; sourceTree = "<group>"; };
 		B2D4090EA5BEA911B13FAC64 /* QuickAssistantService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantService.swift; sourceTree = "<group>"; };
 		C5765FEC97B81300FC03E176 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
@@ -161,6 +165,7 @@
 				D674C48605A3C3593171DD63 /* SleepOverlayController.swift */,
 				8B7DD79216D07DCE1C03E1F5 /* SpotifyObserver.swift */,
 				D2C655496EF920E0027D051E /* StorageService.swift */,
+				1569258B87FCFD7698FAEEF9 /* WindowManagementController.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -173,6 +178,7 @@
 				CA7CD75A7031BC31C99CB439 /* MenuBarContentView.swift */,
 				91ED35B12E9797C5B1F0D76D /* QuickAssistantView.swift */,
 				010CC531E9000F54EA79BDC0 /* SleepOverlayView.swift */,
+				9BBAFF01529F066CB7EE0D03 /* WindowShortcutsSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -318,6 +324,8 @@
 				9C3DFAFD4D0F9E22DD8A1650 /* SleepOverlayView.swift in Sources */,
 				5AB549A14532D1CB9EF9F410 /* SpotifyObserver.swift in Sources */,
 				8B62160A12E27DF2BB1A642A /* StorageService.swift in Sources */,
+				DCF9281766C6BC87727DFE71 /* WindowManagementController.swift in Sources */,
+				83DC37B54141E0715B05AFF8 /* WindowShortcutsSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

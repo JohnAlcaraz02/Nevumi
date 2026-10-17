@@ -47,8 +47,14 @@ final class GlobalHotKeyController {
     }
 }
 
-private let quickAssistantHotKeyHandler: EventHandlerUPP = { _, _, userData in
-    guard let userData else { return noErr }
+private let quickAssistantHotKeyHandler: EventHandlerUPP = { _, event, userData in
+    guard let event, let userData else { return OSStatus(eventNotHandledErr) }
+    var identifier = EventHotKeyID()
+    let result = GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                   nil, MemoryLayout<EventHotKeyID>.size, nil, &identifier)
+    guard result == noErr, identifier.signature == 0x534C504D, identifier.id == 1 else {
+        return OSStatus(eventNotHandledErr)
+    }
     let controller = Unmanaged<GlobalHotKeyController>
         .fromOpaque(userData)
         .takeUnretainedValue()

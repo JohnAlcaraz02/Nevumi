@@ -29,6 +29,10 @@ struct MenuBarContentView: View {
 
         Divider()
 
+        Button("Window Shortcuts…") {
+            coordinator.windowManagement.showSettings()
+        }
+
         Toggle(
             "Launch at Login",
             isOn: Binding(

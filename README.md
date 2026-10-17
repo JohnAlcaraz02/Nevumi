@@ -31,9 +31,20 @@ The app is an accessory application, so it does not appear in the Dock.
 | Shortcut | Action |
 | --- | --- |
 | `⌥ Space` | Open or close Quick Assistant from anywhere |
+| `⌃ ⌥ ←` | Fit the focused window to the left half of its display |
+| `⌃ ⌥ →` | Fit the focused window to the right half of its display |
+| `⌃ ⌥ ↑` | Maximize the focused window within the desktop |
+| `⌃ ⌥ ↓` | Restore the window’s size and position from before its first snap |
+| `⌃ ⌥ Tab` | Switch focus to another window on the same display |
 | `Return` | Submit the assistant command or question |
 | `Esc` | Close Quick Assistant |
 | Any key or click | Leave Sleep Mode |
+
+Choose **Window Shortcuts…** from Nevumi’s menu to enable or disable window shortcuts, record custom key combinations, or restore the defaults. Preferences persist across launches. If a key combination is unavailable, choose another one; Option–Space stays reserved for Quick Assistant.
+
+Window control needs **System Settings → Privacy & Security → Accessibility → Nevumi**. Use **Allow Access…** in Window Shortcuts to open that setting, then return to the target app and try the shortcut. Windows use their current display’s available desktop area, leaving room for the menu bar and Dock. Restore history lasts for the current Nevumi session. Exit full screen before using these shortcuts; some apps enforce a minimum window size or do not support resizing.
+
+**Switch between windows:** Press **Control–Option–Tab** to focus another window on the same display so you can type or use its keyboard commands. With two windows, press it again to switch back. Windows can have different widths and heights, partially overlap, or sit fully on top of each other; they keep their positions and sizes. This works with windows of one app or different apps, such as VS Code and Xcode. Nevumi picks the next frontmost eligible desktop window on the current display; minimized and full-screen windows are skipped. If no other window is available, Nevumi asks you to open one. Customize the shortcut in **Window Shortcuts…**.
 
 ## Quick Assistant
 

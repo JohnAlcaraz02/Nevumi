@@ -9,6 +9,7 @@ import Foundation
 final class AppCoordinator: ObservableObject {
     let spotify = SpotifyObserver()
     let lyrics = LyricsViewModel()
+    let windowManagement = WindowManagementController()
 
     private var cancellables = Set<AnyCancellable>()
     private var quickAssistantHotKey: GlobalHotKeyController?
