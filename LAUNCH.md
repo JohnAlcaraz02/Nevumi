@@ -1,7 +1,7 @@
 # Nevumi paid-launch setup
 
 The public website may be published now. Paid sales are not enabled yet.
-The currently linked v0.1.1 download is a free, unnotarized preview, not a timed
+The currently linked v0.1.2 download is a free, unnotarized preview, not a timed
 trial. The website labels the 14-day trial, $15 early access, and $25 standard
 license as planned. No checkout, payment collection, license enforcement, or
 trial-expiration logic is currently installed in the app.

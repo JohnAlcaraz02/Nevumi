@@ -4,7 +4,7 @@ Nevumi is a macOS menu-bar app that turns the MacBook notch into a compact Spoti
 
 [Visit the Nevumi website](https://nevumi.lively-zebra-4107.chatgpt.site) · [Paid-launch setup](LAUNCH.md)
 
-[Download the latest Nevumi preview](https://github.com/JohnAlcaraz02/Nevumi/releases/tag/v0.1.1)
+[Download the latest Nevumi preview](https://github.com/JohnAlcaraz02/Nevumi/releases/tag/v0.1.2)
 
 The preview installer is ad-hoc signed and not notarized by Apple. macOS may warn or block it when downloaded.
 
