@@ -96,6 +96,25 @@ enum WindowLayout {
     }
 }
 
+/// AX and WindowServer can disagree about a window's title bar and tiled edges.
+/// Rank plausible matches instead of requiring every dimension to match exactly.
+enum WindowFocusMatching {
+    static func score(accessibilityFrame actual: CGRect, serverFrame visible: CGRect) -> CGFloat? {
+        guard actual.width > 0, actual.height > 0, visible.width > 0, visible.height > 0 else { return nil }
+        let overlap = actual.intersection(visible)
+        guard !overlap.isNull else { return nil }
+        let coverage = overlap.width * overlap.height / max(actual.width * actual.height, visible.width * visible.height)
+        let delta = abs(actual.minX - visible.minX) + abs(actual.minY - visible.minY)
+            + abs(actual.maxX - visible.maxX) + abs(actual.maxY - visible.maxY)
+        guard coverage >= 0.8, delta <= 160 else { return nil }
+        return coverage - delta / 1000
+    }
+
+    static func isRegularWindow(role: String?, subrole: String?) -> Bool {
+        (role == nil || role == kAXWindowRole) && (subrole == nil || subrole == kAXStandardWindowSubrole)
+    }
+}
+
 @MainActor
 final class WindowManagementController: NSObject, ObservableObject, NSWindowDelegate {
     @Published var isEnabled: Bool {
@@ -118,6 +137,7 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
         let frame: CGRect
     }
     private var savedWindows: [SavedWindow] = []
+    private var focusTask: Task<Void, Never>?
 
     init(defaults: UserDefaults = .standard, captureLongScreenshot: @escaping () -> Void = {}) {
         self.defaults = defaults
@@ -253,7 +273,8 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
             return
         }
         if action == .focusOther {
-            focusOtherWindow(beside: window)
+            focusTask?.cancel()
+            focusTask = Task { @MainActor in await focusOtherWindow(beside: window) }
             return
         }
         var positionSettable = DarwinBoolean(false)
@@ -309,43 +330,91 @@ final class WindowManagementController: NSObject, ObservableObject, NSWindowDele
         if action == .restore, let savedIndex { savedWindows.remove(at: savedIndex) }
     }
 
-    private func focusOtherWindow(beside focused: AXUIElement) {
+    private func focusOtherWindow(beside focused: AXUIElement) async {
         guard let current = frame(of: focused), let primary = NSScreen.screens.first,
               let entries = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
                                                        kCGNullWindowID) as? [[String: Any]] else { return }
         let screens = NSScreen.screens.map { WindowLayout.accessibilityRect($0.frame, primaryHeight: primary.frame.maxY) }
-        var appWindows: [pid_t: [AXUIElement]] = [:]
-        // Window-server order picks the next window even when frames overlap.
-        for entry in entries {
+        let visibleWindows: [(pid: pid_t, frame: CGRect)] = entries.compactMap { entry in
             guard (entry[kCGWindowLayer as String] as? Int) == 0,
                   let pid = entry[kCGWindowOwnerPID as String] as? Int32,
                   pid != ProcessInfo.processInfo.processIdentifier,
                   let bounds = entry[kCGWindowBounds as String] as? NSDictionary,
-                  let rect = CGRect(dictionaryRepresentation: bounds),
-                  WindowLayout.isOnSameDisplay(rect, focused: current, screens: screens) else { continue }
-            if appWindows[pid] == nil {
-                let app = AXUIElementCreateApplication(pid)
-                AXUIElementSetMessagingTimeout(app, 0.25)
-                appWindows[pid] = attribute(kAXWindowsAttribute, of: app) as? [AXUIElement] ?? []
+                  let rect = CGRect(dictionaryRepresentation: bounds), rect.width > 1, rect.height > 1,
+                  WindowLayout.isOnSameDisplay(rect, focused: current, screens: screens) else { return nil }
+            return (pid, rect)
+        }
+        var appWindows: [pid_t: [AXUIElement]] = [:]
+        var attempted: [AXUIElement] = []
+        var foundCandidate = false
+        var couldNotReadWindows = false
+        // Keep WindowServer's front-to-back order, including overlapping windows.
+        for visible in visibleWindows {
+            guard !Task.isCancelled else { return }
+            if appWindows[visible.pid] == nil {
+                let application = AXUIElementCreateApplication(visible.pid)
+                AXUIElementSetMessagingTimeout(application, 0.5)
+                var result: CFTypeRef?
+                var status = AXUIElementCopyAttributeValue(application, kAXWindowsAttribute as CFString, &result)
+                if status == .cannotComplete {
+                    // Busy apps sometimes time out while updating tiled windows.
+                    await Task.yield()
+                    status = AXUIElementCopyAttributeValue(application, kAXWindowsAttribute as CFString, &result)
+                }
+                if status != .success { couldNotReadWindows = true }
+                appWindows[visible.pid] = (result as? [AXUIElement] ?? []).filter { candidate in
+                    AXUIElementSetMessagingTimeout(candidate, 0.5)
+                    return WindowFocusMatching.isRegularWindow(
+                        role: attribute(kAXRoleAttribute, of: candidate) as? String,
+                        subrole: attribute(kAXSubroleAttribute, of: candidate) as? String
+                    ) && (attribute(kAXMinimizedAttribute, of: candidate) as? Bool) != true
+                      && (attribute("AXFullScreen", of: candidate) as? Bool) != true
+                }
             }
-            for candidate in appWindows[pid] ?? [] {
-                guard !CFEqual(candidate, focused) else { continue }
-                AXUIElementSetMessagingTimeout(candidate, 0.25)
+            let windows = appWindows[visible.pid] ?? []
+            var matches: [(window: AXUIElement, score: CGFloat)] = windows.compactMap { candidate in
                 guard let actual = frame(of: candidate),
-                      abs(actual.minX - rect.minX) <= 2, abs(actual.minY - rect.minY) <= 2,
-                      abs(actual.width - rect.width) <= 2, abs(actual.height - rect.height) <= 2,
-                      (attribute(kAXSubroleAttribute, of: candidate) as? String) == kAXStandardWindowSubrole,
-                      (attribute(kAXMinimizedAttribute, of: candidate) as? Bool) != true,
-                      (attribute("AXFullScreen", of: candidate) as? Bool) != true,
-                      let app = NSRunningApplication(processIdentifier: pid) else { continue }
-                guard app.activate(options: []) else { continue }
-                let raised = AXUIElementPerformAction(candidate, kAXRaiseAction as CFString)
+                      WindowLayout.isOnSameDisplay(actual, focused: current, screens: screens),
+                      let score = WindowFocusMatching.score(accessibilityFrame: actual, serverFrame: visible.frame) else { return nil }
+                return (candidate, score)
+            }
+            // A single AX window and a single visible window for this app are
+            // unambiguous even when the app reports unusual frame decorations.
+            if matches.isEmpty, windows.count == 1,
+               visibleWindows.filter({ $0.pid == visible.pid }).count == 1,
+               let candidate = windows.first, let actual = frame(of: candidate),
+               WindowLayout.isOnSameDisplay(actual, focused: current, screens: screens) {
+                matches = [(candidate, 0)]
+            }
+            for match in matches.sorted(by: { $0.score > $1.score }) {
+                let candidate = match.window
+                guard !CFEqual(candidate, focused), !attempted.contains(where: { CFEqual($0, candidate) }),
+                      let app = NSRunningApplication(processIdentifier: visible.pid) else { continue }
+                attempted.append(candidate)
+                foundCandidate = true
+                let application = AXUIElementCreateApplication(visible.pid)
+                AXUIElementSetMessagingTimeout(application, 0.5)
+                // Activation and raising are separate operations. Some apps
+                // don't implement AXRaise but do accept focus on the app.
+                _ = app.activate(options: [])
+                _ = AXUIElementPerformAction(candidate, kAXRaiseAction as CFString)
                 _ = AXUIElementSetAttributeValue(candidate, kAXMainAttribute as CFString, kCFBooleanTrue)
+                _ = AXUIElementSetAttributeValue(application, kAXFocusedWindowAttribute as CFString, candidate)
                 _ = AXUIElementSetAttributeValue(candidate, kAXFocusedAttribute as CFString, kCFBooleanTrue)
-                if raised == .success { return }
+                try? await Task.sleep(for: .milliseconds(100))
+                guard !Task.isCancelled else { return }
+                if NSWorkspace.shared.frontmostApplication?.processIdentifier == visible.pid,
+                   let value = attribute(kAXFocusedWindowAttribute, of: application),
+                   CFGetTypeID(value) == AXUIElementGetTypeID(), CFEqual(value, candidate) { return }
             }
         }
-        showMessage("No other window found", "Open another app window on this display, then press the shortcut again. It can be any size or overlap this window.")
+        if foundCandidate {
+            showMessage("Couldn’t focus the other window", "The window is visible, but its app didn’t accept the focus request. Click it once, then try the shortcut again.")
+        } else if couldNotReadWindows {
+            showMessage("Couldn’t read the other windows", "An app didn’t respond to window access. Try the shortcut again, or check Nevumi’s Accessibility access in System Settings.")
+        } else {
+            showMessage("No other window found", "Open another app window on this display, then press the shortcut again. It can be any size or overlap this window.")
+        }
     }
 
     private func attribute(_ name: String, of element: AXUIElement) -> CFTypeRef? {

@@ -60,6 +60,19 @@ struct WindowLayoutTests {
         precondition(!WindowLayout.isOnSameDisplay(.zero, focused: editor, screens: display))
         precondition(!WindowLayout.isOnSameDisplay(editor, focused: editor, screens: []))
         precondition(!WindowLayout.isOnSameDisplay(editor.offsetBy(dx: 5000, dy: 0), focused: editor, screens: display))
+        // WindowServer includes decorations that AX may omit on tiled windows.
+        let serverWindow = CGRect(x: 735, y: 33, width: 735, height: 923)
+        let axWindow = CGRect(x: 739, y: 61, width: 727, height: 895)
+        precondition(WindowFocusMatching.score(accessibilityFrame: axWindow, serverFrame: serverWindow) != nil)
+        let exactScore = WindowFocusMatching.score(accessibilityFrame: serverWindow, serverFrame: serverWindow)!
+        precondition(exactScore > WindowFocusMatching.score(accessibilityFrame: axWindow, serverFrame: serverWindow)!)
+        precondition(WindowFocusMatching.score(accessibilityFrame: CGRect(x: 0, y: 33, width: 735, height: 923), serverFrame: serverWindow) == nil)
+        precondition(WindowFocusMatching.score(accessibilityFrame: CGRect(x: 800, y: 100, width: 120, height: 90), serverFrame: serverWindow) == nil)
+        precondition(WindowFocusMatching.score(accessibilityFrame: .zero, serverFrame: serverWindow) == nil)
+        precondition(WindowFocusMatching.isRegularWindow(role: kAXWindowRole, subrole: nil))
+        precondition(WindowFocusMatching.isRegularWindow(role: kAXWindowRole, subrole: kAXStandardWindowSubrole))
+        precondition(!WindowFocusMatching.isRegularWindow(role: kAXWindowRole, subrole: kAXDialogSubrole))
+        precondition(!WindowFocusMatching.isRegularWindow(role: kAXButtonRole, subrole: nil))
         let shortcut = WindowAction.right.defaultShortcut
         let decoded = try JSONDecoder().decode(WindowShortcut.self, from: JSONEncoder().encode(shortcut))
         precondition(decoded == shortcut)

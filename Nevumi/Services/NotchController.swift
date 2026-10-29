@@ -320,83 +320,56 @@ private struct NotchFileDropExpandedView: View {
     let fileName: String?
     let action: NotchDropAction
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 21, weight: .semibold))
-                    .foregroundStyle(tint)
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                dropTarget(.convert, title: "Convert", icon: "arrow.triangle.2.circlepath")
+                dropTarget(.airDrop, title: "AirDrop", icon: "dot.radiowaves.left.and.right")
+            }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        .foregroundStyle(.white)
+            HStack(spacing: 5) {
+                Image(systemName: "doc")
+                    .font(.system(size: 10))
+                Text(fileName ?? "File")
+                    .font(.system(size: 11))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            .foregroundStyle(.white.opacity(0.5))
+            .padding(.horizontal, 12)
+        }
+        .frame(width: 280)
+        .padding(.vertical, 3)
+        .animation(reduceMotion ? .easeOut(duration: 0.12) : .smooth(duration: 0.22), value: action)
+    }
 
-                    if let fileName {
-                        Text(fileName)
-                            .font(.system(size: 11, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.58))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
+    private func dropTarget(_ target: NotchDropAction, title: String, icon: String) -> some View {
+        let isActive = action == target
+
+        return VStack(spacing: 7) {
+            Image(systemName: icon)
+                .font(.system(size: 22, weight: .medium))
+                .foregroundStyle(isActive ? .white : .white.opacity(0.6))
+                .frame(width: 40, height: 40)
+                .background {
+                    Circle()
+                        .fill(isActive ? Color(nsColor: .systemBlue) : .white.opacity(0.08))
                 }
-            }
 
-            Text(subtitle)
-                .font(.system(size: 10, weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.45))
-
-            HStack {
-                zoneHint("Convert", isActive: action == .convert)
-                Spacer(minLength: 24)
-                zoneHint("AirDrop", isActive: action == .airDrop)
-            }
+            Text(title)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.white.opacity(isActive ? 1 : 0.6))
         }
-        .frame(minWidth: 260, minHeight: 107)
-        .overlay(alignment: .bottom) {
-            Capsule()
-                .fill(tint.opacity(0.85))
-                .frame(width: 54, height: 2)
+        .padding(.vertical, 9)
+        .frame(maxWidth: .infinity)
+        .background {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.white.opacity(isActive ? 0.08 : 0))
         }
-        .animation(.easeInOut(duration: 0.15), value: action)
-    }
-
-    private var icon: String {
-        switch action {
-        case .convert: return "arrow.down.doc.fill"
-        case .airDrop: return "dot.radiowaves.left.and.right"
-        }
-    }
-
-    private var tint: Color {
-        switch action {
-        case .convert: return .green
-        case .airDrop: return .blue
-        }
-    }
-
-    private var title: String {
-        switch action {
-        case .convert: return "Drop to convert"
-        case .airDrop: return "Drop to AirDrop"
-        }
-    }
-
-    private var subtitle: String {
-        switch action {
-        case .convert: return "Release to choose an output format"
-        case .airDrop: return "Release to send to a nearby device"
-        }
-    }
-
-    private func zoneHint(_ label: String, isActive: Bool) -> some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(isActive ? tint : .white.opacity(0.25))
-                .frame(width: 4, height: 4)
-            Text(label)
-                .font(.system(size: 9, weight: isActive ? .bold : .medium, design: .rounded))
-                .foregroundStyle(isActive ? .white.opacity(0.9) : .white.opacity(0.35))
-        }
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(target == .convert ? "Release to choose a file format" : "Release to share with a nearby device")
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }

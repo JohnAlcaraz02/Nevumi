@@ -13,17 +13,18 @@ struct QuickAssistantView: View {
     @State private var isCalendarButtonHovered = false
     @State private var isConversationMenuHovered = false
     @State private var isCloseButtonHovered = false
+    @State private var hoveredSuggestion: String?
 
-    private let suggestions = [
-        "What song is playing?",
-        "Add calendar note",
-        "Enter Sleep Mode",
+    private let suggestions: [(title: String, icon: String, prompt: String)] = [
+        ("Now Playing", "music.note", "What song is playing?"),
+        ("Add Calendar Note", "calendar", "Add calendar note"),
+        ("Enter Sleep Mode", "moon", "Enter Sleep Mode"),
     ]
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider().overlay(.white.opacity(0.08))
+            Divider()
             if let attachment = viewModel.attachment,
                !viewModel.isShowingCalendarComposer {
                 attachmentBar(attachment)
@@ -34,12 +35,11 @@ struct QuickAssistantView: View {
             }
         }
         .frame(width: 540, height: panelHeight)
-        .background(.ultraThinMaterial)
-        .background(Color.black.opacity(0.68))
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(.white.opacity(0.12), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(.primary.opacity(0.1), lineWidth: 0.5)
                 .allowsHitTesting(false)
         }
         .onAppear {
@@ -67,17 +67,15 @@ struct QuickAssistantView: View {
             Image("NevumiMark")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 22, height: 16)
+                .frame(width: 18, height: 14)
                 .foregroundStyle(Color(red: 0.72, green: 0.65, blue: 1))
-            Text("Nevumi")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+            Text("Quick Assistant")
+                .font(.system(size: 14, weight: .semibold))
             Spacer()
             Text("⌥ Space")
-                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.secondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(.white.opacity(0.07), in: Capsule())
+                .padding(.trailing, 6)
             Button {
                 viewModel.showCalendarComposer()
             } label: {
@@ -85,7 +83,7 @@ struct QuickAssistantView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .frame(width: 30, height: 30)
                     .background(
-                        isCalendarButtonHovered ? .white.opacity(0.08) : .clear,
+                        isCalendarButtonHovered ? Color.primary.opacity(0.07) : Color.clear,
                         in: Circle()
                     )
                     .contentShape(Rectangle())
@@ -132,7 +130,7 @@ struct QuickAssistantView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .frame(width: 30, height: 30)
                     .background(
-                        isConversationMenuHovered ? .white.opacity(0.08) : .clear,
+                        isConversationMenuHovered ? Color.primary.opacity(0.07) : Color.clear,
                         in: Circle()
                     )
                     .contentShape(Rectangle())
@@ -149,7 +147,7 @@ struct QuickAssistantView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .frame(width: 30, height: 30)
                     .background(
-                        isCloseButtonHovered ? .white.opacity(0.08) : .clear,
+                        isCloseButtonHovered ? Color.primary.opacity(0.07) : Color.clear,
                         in: Circle()
                     )
                     .contentShape(Rectangle())
@@ -161,7 +159,7 @@ struct QuickAssistantView: View {
             .onHover { isCloseButtonHovered = $0 }
         }
         .padding(.horizontal, 18)
-        .frame(height: 48)
+        .frame(height: 44)
     }
 
     private var content: some View {
@@ -171,21 +169,51 @@ struct QuickAssistantView: View {
             } else if !viewModel.messages.isEmpty || isAssistantBusy {
                 conversation
             } else {
-                VStack(spacing: 14) {
-                    Text("What can I help you with?")
-                        .font(.system(size: 17, weight: .semibold, design: .rounded))
-
-                    HStack(spacing: 8) {
-                        ForEach(suggestions, id: \.self) { suggestion in
-                            Button(suggestion) { viewModel.useSuggestion(suggestion) }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                        }
+                VStack(spacing: 16) {
+                    VStack(spacing: 5) {
+                        Text("How can I help?")
+                            .font(.system(size: 20, weight: .semibold))
+                        Text("Ask a question or choose an action.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
                     }
 
-                    Text("or drop a PDF, image, audio, or text file anywhere on this card")
+                    VStack(spacing: 0) {
+                        ForEach(suggestions, id: \.title) { suggestion in
+                            Button {
+                                viewModel.useSuggestion(suggestion.prompt)
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: suggestion.icon)
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(Color(nsColor: .systemBlue))
+                                        .frame(width: 20)
+                                    Text(suggestion.title)
+                                        .font(.system(size: 12))
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 9, weight: .semibold))
+                                        .foregroundStyle(.tertiary)
+                                }
+                                .padding(.horizontal, 12)
+                                .frame(height: 33)
+                                .contentShape(Rectangle())
+                                .background(.primary.opacity(hoveredSuggestion == suggestion.title ? 0.06 : 0))
+                            }
+                            .buttonStyle(.plain)
+                            .onHover { hoveredSuggestion = $0 ? suggestion.title : nil }
+                            if suggestion.title != suggestions.last?.title {
+                                Divider().padding(.leading, 42)
+                            }
+                        }
+                    }
+                    .background(.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .frame(width: 290)
+
+                    Text("Drop files here to work with them.")
                         .font(.system(size: 11))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -235,18 +263,18 @@ struct QuickAssistantView: View {
                     .frame(width: 14, height: 10)
                     .foregroundStyle(Color(red: 0.72, green: 0.65, blue: 1))
                     .frame(width: 24, height: 24)
-                    .background(Color.indigo.opacity(0.13), in: Circle())
+                    .background(Color(nsColor: .systemBlue).opacity(0.13), in: Circle())
             }
 
             VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
                 Text(message.text)
-                    .font(.system(size: 13, design: .rounded))
+                    .font(.system(size: 13))
                     .foregroundStyle(isUser ? Color.white : Color.primary.opacity(0.92))
                     .textSelection(.enabled)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 9)
                     .background(
-                        isUser ? Color.indigo : Color.white.opacity(0.075),
+                        isUser ? Color(nsColor: .systemBlue) : Color.primary.opacity(0.055),
                         in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                     )
 
@@ -268,11 +296,11 @@ struct QuickAssistantView: View {
         HStack(spacing: 5) {
             ForEach(context.prefix(3)) { item in
                 Label(item.label, systemImage: item.systemImage)
-                    .font(.system(size: 9, weight: .medium, design: .rounded))
+                    .font(.system(size: 9, weight: .medium))
                     .lineLimit(1)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 4)
-                    .background(.white.opacity(0.055), in: Capsule())
+                    .background(.primary.opacity(0.045), in: Capsule())
             }
         }
         .foregroundStyle(.secondary)
@@ -322,7 +350,7 @@ struct QuickAssistantView: View {
             }
         }
         .buttonStyle(.plain)
-        .font(.system(size: 10, weight: .medium, design: .rounded))
+        .font(.system(size: 10, weight: .medium))
         .foregroundStyle(.secondary)
     }
 
@@ -334,16 +362,16 @@ struct QuickAssistantView: View {
                 .frame(width: 14, height: 10)
                 .foregroundStyle(Color(red: 0.72, green: 0.65, blue: 1))
                 .frame(width: 24, height: 24)
-                .background(Color.indigo.opacity(0.13), in: Circle())
+                .background(Color(nsColor: .systemBlue).opacity(0.13), in: Circle())
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
                 Text(activityLabel)
-                    .font(.system(size: 11, design: .rounded))
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 11)
             .padding(.vertical, 8)
-            .background(.white.opacity(0.06), in: Capsule())
+            .background(.primary.opacity(0.06), in: Capsule())
             Spacer()
         }
     }
@@ -381,13 +409,13 @@ struct QuickAssistantView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Image(systemName: "calendar.badge.plus")
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color(nsColor: .systemBlue))
                     .font(.system(size: 14, weight: .semibold))
                     .frame(width: 28, height: 28)
-                    .background(Color.indigo.opacity(0.14), in: Circle())
+                    .background(Color(nsColor: .systemBlue).opacity(0.14), in: Circle())
                 VStack(alignment: .leading, spacing: 1) {
                     Text("New calendar note")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 16, weight: .semibold))
                     Text("Saves to your default calendar")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
@@ -403,7 +431,7 @@ struct QuickAssistantView: View {
                 TextField("Add a note (optional)", text: $viewModel.calendarEntryNotes)
                     .textFieldStyle(.roundedBorder)
 
-                Divider().overlay(.white.opacity(0.06))
+                Divider().overlay(.primary.opacity(0.06))
 
                 HStack(spacing: 10) {
                     Label("When", systemImage: "clock")
@@ -443,10 +471,10 @@ struct QuickAssistantView: View {
             }
             .font(.system(size: 12))
             .padding(10)
-            .background(.white.opacity(0.055), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(.white.opacity(0.07), lineWidth: 1)
+                    .strokeBorder(.primary.opacity(0.07), lineWidth: 1)
                     .allowsHitTesting(false)
             }
 
@@ -488,7 +516,7 @@ struct QuickAssistantView: View {
         VStack(spacing: 10) {
             HStack(spacing: 9) {
                 Image(systemName: attachmentIcon(for: attachment.url))
-                    .foregroundStyle(.indigo)
+                    .foregroundStyle(Color(nsColor: .systemBlue))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(viewModel.attachments.count == 1
                         ? attachment.name
@@ -608,10 +636,10 @@ struct QuickAssistantView: View {
                 .controlSize(.mini)
             }
         }
-        .font(.system(size: 12, weight: .medium, design: .rounded))
+        .font(.system(size: 12, weight: .medium))
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
-        .background(.black.opacity(0.16))
+        .background(.primary.opacity(0.025))
     }
 
     private func attachmentAction(_ title: String, prompt: String? = nil, icon: String) -> some View {
@@ -626,22 +654,22 @@ struct QuickAssistantView: View {
     }
 
     private var fileDropOverlay: some View {
-        RoundedRectangle(cornerRadius: 22, style: .continuous)
-            .fill(Color.indigo.opacity(0.24))
+        RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(.regularMaterial)
             .overlay {
                 VStack(spacing: 10) {
                     Image(systemName: "arrow.down.doc.fill")
                         .font(.system(size: 30))
                     Text("Drop to attach")
-                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .font(.system(size: 16, weight: .semibold))
                     Text("One or more PDFs, images, audio, text, or source files")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
             }
             .overlay {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(Color.indigo, style: StrokeStyle(lineWidth: 2, dash: [7]))
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color(nsColor: .systemBlue).opacity(0.7), lineWidth: 2)
             }
     }
 
@@ -689,42 +717,50 @@ struct QuickAssistantView: View {
         }
     }
 
+    private var canSubmit: Bool {
+        !viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isAssistantBusy
+    }
+
     private var inputBar: some View {
         HStack(spacing: 10) {
             Button(action: chooseFile) {
                 Image(systemName: "paperclip")
+                    .font(.system(size: 15))
+                    .frame(width: 24, height: 28)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .foregroundStyle(.secondary)
             .help("Attach a file")
-            Image(systemName: "command")
-                .foregroundStyle(.secondary)
-            TextField("Ask or tell Nevumi what to do…", text: $viewModel.query)
+            .accessibilityLabel("Attach a file")
+
+            TextField("Message Nevumi…", text: $viewModel.query)
+                .font(.system(size: 13))
                 .textFieldStyle(.plain)
                 .focused($isInputFocused)
-                .onSubmit(viewModel.submit)
+                .onSubmit { if canSubmit { viewModel.submit() } }
+
             Button(action: viewModel.submit) {
                 Image(systemName: "arrow.up")
-                    .font(.system(size: 12, weight: .bold))
-                    .frame(width: 24, height: 24)
-                    .background(Color.indigo, in: Circle())
-                    .foregroundStyle(.white)
+                    .font(.system(size: 12, weight: .semibold))
+                    .frame(width: 26, height: 26)
+                    .foregroundStyle(canSubmit ? Color.white : Color.secondary)
+                    .background(canSubmit ? Color(nsColor: .systemBlue) : Color.primary.opacity(0.07), in: Circle())
             }
             .buttonStyle(.plain)
-            .disabled(
-                viewModel.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                    || viewModel.isWorking
-                    || viewModel.isConverting
-                    || viewModel.isRemovingBackground
-                    || viewModel.isChangingBackgroundColor
-                    || viewModel.isGeneratingBackground
-                    || viewModel.isEnhancingImage
-                    || viewModel.isAnalyzingAttachment
-            )
+            .disabled(!canSubmit)
+            .help("Send message")
+            .accessibilityLabel("Send message")
         }
-        .padding(.horizontal, 14)
-        .frame(height: 52)
-        .background(.black.opacity(0.2))
+        .padding(.horizontal, 10)
+        .frame(height: 44)
+        .background(.primary.opacity(0.035), in: RoundedRectangle(cornerRadius: 11))
+        .overlay {
+            RoundedRectangle(cornerRadius: 11)
+                .strokeBorder(.primary.opacity(0.1), lineWidth: 0.5)
+                .allowsHitTesting(false)
+        }
+        .padding(14)
     }
 
     private func focusInput() {
