@@ -2,6 +2,8 @@
 
 Nevumi is a macOS menu-bar app that turns the MacBook notch into a compact Spotify player, synchronized lyric display, Sleep Mode surface, and on-device Quick Assistant.
 
+[Visit the Nevumi website](https://nevumi.lively-zebra-4107.chatgpt.site) · [Paid-launch setup](LAUNCH.md)
+
 [Download the latest Nevumi preview](https://github.com/JohnAlcaraz02/Nevumi/releases/tag/v0.1.1)
 
 The preview installer is ad-hoc signed and not notarized by Apple. macOS may warn or block it when downloaded.
@@ -302,4 +304,8 @@ The source folder, Xcode project, target, scheme and built product are named Nev
 
 Run `bash scripts/package-release.sh --test` to build and verify a universal preview installer for Apple silicon and Intel. Output defaults to `.build/releases/`. For Developer ID signing and notarization, use `--public` with your local `SIGNING_IDENTITY` and `NOTARY_PROFILE`.
 
-The landing page source is in `docs/`.
+The landing page source is in `docs/`. Build the static hosting output with
+`python3 scripts/website/build-static.py`. The Sites project identity is stored in
+`.openai/hosting.json`. The public site currently offers a free development
+preview; paid checkout and the 14-day trial are not enabled yet. See [LAUNCH.md](LAUNCH.md)
+for the remaining account setup, signing, and licensing steps.
