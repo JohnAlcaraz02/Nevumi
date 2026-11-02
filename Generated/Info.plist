@@ -23,7 +23,7 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>Nevumi controls Spotify playback and reads the current track for Now Playing and Quick Assistant.</string>
+	<string>Nevumi controls Spotify and Apple Music playback and reads the current track for Now Playing and Quick Assistant.</string>
 	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
 	<string>Nevumi adds the calendar notes and events you create in Quick Assistant.</string>
 	<key>NSHumanReadableCopyright</key>

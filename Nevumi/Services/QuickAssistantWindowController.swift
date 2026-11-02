@@ -14,9 +14,9 @@ final class QuickAssistantWindowController: NSObject, NSWindowDelegate {
     private var viewModel: QuickAssistantViewModel?
     private var escapeMonitor: Any?
 
-    func configure(spotify: SpotifyObserver, lyrics: LyricsViewModel) {
+    func configure(music: MusicPlayerObserver, lyrics: LyricsViewModel) {
         guard viewModel == nil else { return }
-        viewModel = QuickAssistantViewModel(spotify: spotify, lyrics: lyrics)
+        viewModel = QuickAssistantViewModel(music: music, lyrics: lyrics)
     }
 
     func toggle() {
@@ -30,7 +30,15 @@ final class QuickAssistantWindowController: NSObject, NSWindowDelegate {
     func show() {
         guard let viewModel else { return }
         let panel = panel ?? makePanel(viewModel: viewModel)
-        position(panel)
+        // Keep the user's placement unless its header is no longer on a display.
+        let headerFrame = NSRect(x: panel.frame.minX, y: panel.frame.maxY - 44,
+                                 width: panel.frame.width, height: 44)
+        if !NSScreen.screens.contains(where: {
+            let visibleHeader = $0.visibleFrame.intersection(headerFrame)
+            return visibleHeader.width >= 100 && visibleHeader.height >= 22
+        }) {
+            position(panel)
+        }
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         viewModel.prepareForPresentation()
@@ -64,6 +72,8 @@ final class QuickAssistantWindowController: NSObject, NSWindowDelegate {
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = true
+        panel.isMovable = true
+        panel.isMovableByWindowBackground = false
         panel.hidesOnDeactivate = false
         panel.level = .statusBar
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
@@ -77,6 +87,7 @@ final class QuickAssistantWindowController: NSObject, NSWindowDelegate {
             )
         )
         panel.delegate = self
+        position(panel)
         self.panel = panel
         return panel
     }

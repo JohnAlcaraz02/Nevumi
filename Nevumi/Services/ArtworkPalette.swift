@@ -27,7 +27,7 @@ final class ArtworkPalette: ObservableObject {
     }
 
     private static func averageColor(at url: URL) async -> Color? {
-        guard let (data, _) = try? await URLSession.shared.data(from: url),
+        guard let data = try? await MusicArtworkData.load(url),
               let image = NSImage(data: data),
               let tiff = image.tiffRepresentation,
               let ciImage = CIImage(data: tiff)
@@ -75,5 +75,37 @@ extension Color {
             saturation: min(max(saturation, 0.45), 1),
             brightness: min(max(brightness, 0.4), 0.8)
         )
+    }
+}
+
+/// Music.app provides local artwork while Spotify provides remote artwork URLs.
+enum MusicArtworkData {
+    static func load(_ url: URL) async throws -> Data {
+        if url.isFileURL { return try Data(contentsOf: url) }
+        return try await URLSession.shared.data(from: url).0
+    }
+}
+
+struct MusicArtwork<Content: View>: View {
+    let url: URL?
+    @ViewBuilder let content: (AsyncImagePhase) -> Content
+    @State private var phase: AsyncImagePhase = .empty
+
+    var body: some View {
+        content(phase)
+            .task(id: url) {
+                phase = .empty
+                guard let url else { return }
+                do {
+                    let data = try await MusicArtworkData.load(url)
+                    try Task.checkCancellation()
+                    if let image = NSImage(data: data) {
+                        phase = .success(Image(nsImage: image))
+                    }
+                } catch {
+                    guard !Task.isCancelled else { return }
+                    phase = .failure(error)
+                }
+            }
     }
 }

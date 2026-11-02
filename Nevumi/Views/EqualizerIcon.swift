@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Three bars that bounce in a loop while `isAnimating`, used as a small
-/// "now playing" indicator next to the Spotify banner.
+/// "now playing" indicator next to the Music banner.
 struct EqualizerIcon: View {
     var isAnimating: Bool
 

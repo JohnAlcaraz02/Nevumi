@@ -7,16 +7,16 @@ struct MenuBarContentView: View {
     @ObservedObject var loginItem: LoginItemManager
 
     var body: some View {
-        if let nowPlaying = coordinator.spotify.nowPlaying {
+        if let nowPlaying = coordinator.music.nowPlaying {
             Text("\(nowPlaying.title) — \(nowPlaying.artist)")
         } else {
             Text("Not Playing")
         }
 
         Button("Enter Sleep Mode") {
-            SleepOverlayController.shared.show(spotify: coordinator.spotify, lyrics: coordinator.lyrics)
+            SleepOverlayController.shared.show(music: coordinator.music, lyrics: coordinator.lyrics)
         }
-        .disabled(coordinator.spotify.nowPlaying == nil)
+        .disabled(coordinator.music.nowPlaying == nil)
 
         Button("Open Quick Assistant") {
             QuickAssistantWindowController.shared.show()

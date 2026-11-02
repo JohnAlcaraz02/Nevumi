@@ -58,14 +58,14 @@ struct WebsiteScreenshots {
     }
 
     @MainActor static func renderAll() async throws {
-        let spotify = SpotifyObserver()
-        spotify.nowPlaying = .init(title: "Evening, Slowly", artist: "Sample track", isPlaying: true, duration: 196, artworkURL: nil)
-        spotify.lastPosition = 84
-        spotify.lastPositionDate = .now
+        let music = MusicPlayerObserver()
+        music.nowPlaying = .init(title: "Evening, Slowly", artist: "Sample track", isPlaying: true, duration: 196, artworkURL: nil)
+        music.lastPosition = 84
+        music.lastPositionDate = .now
         let lyrics = LyricsViewModel()
         lyrics.lines = [.init(time: 0, text: "A little space to just be."), .init(time: 20, text: "Let the evening in."), .init(time: 40, text: "And let the world slow down.")]
         lyrics.currentLine = lyrics.lines[1]
-        let assistant = QuickAssistantViewModel(spotify: spotify, lyrics: lyrics)
+        let assistant = QuickAssistantViewModel(music: music, lyrics: lyrics)
         try await capture("assistant", width: 540, height: 390, view: QuickAssistantView(viewModel: assistant, onClose: {}, onHeightChange: { _ in }))
         assistant.showCalendarComposer()
         assistant.calendarEntryTitle = "Time for a walk"
@@ -91,8 +91,8 @@ struct WebsiteScreenshots {
         playback.isPlaying = true
         playback.duration = 196
         playback.currentLyric = "Let the evening in."
-        try await capture("notch-player", width: 380, height: 230, view: NotchExpandedView(state: playback, spotify: spotify).padding(20).frame(width: 380, height: 230).background(.black).clipShape(RoundedRectangle(cornerRadius: 24)))
-        try await capture("sleep-mode", width: 1280, height: 800, view: SleepOverlayView(spotify: spotify, lyrics: lyrics, onDismiss: {}))
+        try await capture("notch-player", width: 380, height: 230, view: NotchExpandedView(state: playback, music: music).padding(20).frame(width: 380, height: 230).background(.black).clipShape(RoundedRectangle(cornerRadius: 24)))
+        try await capture("sleep-mode", width: 1280, height: 800, view: SleepOverlayView(music: music, lyrics: lyrics, onDismiss: {}))
         let editor = try QuickAssistantImageEditorModel(sourceURL: sampleURL)
         try await capture("image-editor", width: 1040, height: 720, view: QuickAssistantImageEditorView(model: editor, onClose: {}))
         let screenshot = LongScreenshotEditorModel(image: sampleDocument())

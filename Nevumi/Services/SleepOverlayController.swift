@@ -11,7 +11,7 @@ import SwiftUI
 /// Sleep Mode it is interactive and closes on a key press or click. While
 /// the Mac is locked it becomes a click-through, non-key window that remains
 /// eligible for display without a logged-in desktop and temporarily prevents
-/// idle display/system sleep while Spotify is playing.
+/// idle display/system sleep while Music is playing.
 @MainActor
 final class SleepOverlayController: NSObject {
     static let shared = SleepOverlayController()
@@ -32,19 +32,19 @@ final class SleepOverlayController: NSObject {
     private var sleepObserver: NSObjectProtocol?
     private var wakeObserver: NSObjectProtocol?
 
-    func show(spotify: SpotifyObserver, lyrics: LyricsViewModel) {
-        present(spotify: spotify, lyrics: lyrics, mode: .manual)
+    func show(music: MusicPlayerObserver, lyrics: LyricsViewModel) {
+        present(music: music, lyrics: lyrics, mode: .manual)
     }
 
     private func present(
-        spotify: SpotifyObserver,
+        music: MusicPlayerObserver,
         lyrics: LyricsViewModel,
         mode: PresentationMode
     ) {
         if let window {
             if mode == .manual, isDelegatedToLockScreen {
                 hide()
-                present(spotify: spotify, lyrics: lyrics, mode: mode)
+                present(music: music, lyrics: lyrics, mode: mode)
                 return
             }
             configure(window: window, for: mode)
@@ -65,7 +65,7 @@ final class SleepOverlayController: NSObject {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panel.canBecomeVisibleWithoutLogin = mode == .lockScreen
         panel.contentView = NSHostingView(
-            rootView: SleepOverlayView(spotify: spotify, lyrics: lyrics, onDismiss: { [weak self] in self?.hide() })
+            rootView: SleepOverlayView(music: music, lyrics: lyrics, onDismiss: { [weak self] in self?.hide() })
         )
         window = panel
         configure(window: panel, for: mode)
@@ -115,18 +115,18 @@ final class SleepOverlayController: NSObject {
     /// track is playing. The accompanying power activity prevents idle sleep,
     /// but forced sleep (lid close, Apple menu, or low battery) is respected.
     /// Call once at app launch.
-    func observeLockEvents(spotify: SpotifyObserver, lyrics: LyricsViewModel, isPlaying: @escaping () -> Bool) {
+    func observeLockEvents(music: MusicPlayerObserver, lyrics: LyricsViewModel, isPlaying: @escaping () -> Bool) {
         let distributedCenter = DistributedNotificationCenter.default()
         let workspaceCenter = NSWorkspace.shared.notificationCenter
 
-        playbackCancellable = spotify.$nowPlaying
+        playbackCancellable = music.$nowPlaying
             .map { $0?.isPlaying == true }
             .removeDuplicates()
             .sink { [weak self] isPlaying in
                 Task { @MainActor in
                     guard let self, self.isScreenLocked else { return }
                     if isPlaying {
-                        self.present(spotify: spotify, lyrics: lyrics, mode: .lockScreen)
+                        self.present(music: music, lyrics: lyrics, mode: .lockScreen)
                     } else {
                         self.hide()
                     }
@@ -141,7 +141,7 @@ final class SleepOverlayController: NSObject {
             Task { @MainActor in
                 self?.isScreenLocked = true
                 guard isPlaying() else { return }
-                self?.present(spotify: spotify, lyrics: lyrics, mode: .lockScreen)
+                self?.present(music: music, lyrics: lyrics, mode: .lockScreen)
             }
         }
         unlockObserver = distributedCenter.addObserver(
@@ -171,7 +171,7 @@ final class SleepOverlayController: NSObject {
         ) { [weak self] _ in
             Task { @MainActor in
                 guard let self, self.isScreenLocked, isPlaying() else { return }
-                self.present(spotify: spotify, lyrics: lyrics, mode: .lockScreen)
+                self.present(music: music, lyrics: lyrics, mode: .lockScreen)
             }
         }
     }
@@ -180,7 +180,7 @@ final class SleepOverlayController: NSObject {
         guard lockScreenActivity == nil else { return }
         lockScreenActivity = ProcessInfo.processInfo.beginActivity(
             options: [.idleSystemSleepDisabled, .idleDisplaySleepDisabled],
-            reason: "Showing Spotify playback while the Mac is locked"
+            reason: "Showing Music playback while the Mac is locked"
         )
     }
 

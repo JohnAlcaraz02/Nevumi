@@ -1,6 +1,6 @@
 # Nevumi
 
-Nevumi is a macOS menu-bar app that turns the MacBook notch into a compact Spotify player, synchronized lyric display, Sleep Mode surface, and on-device Quick Assistant.
+Nevumi is a macOS menu-bar app that turns the MacBook notch into a compact Spotify and Apple Music player, synchronized lyric display, Sleep Mode surface, and on-device Quick Assistant.
 
 [Visit the Nevumi website](https://nevumi.lively-zebra-4107.chatgpt.site) · [Paid-launch setup](LAUNCH.md)
 
@@ -12,18 +12,18 @@ The preview installer is ad-hoc signed and not notarized by Apple. macOS may war
 
 - macOS 26 or newer
 - Xcode 26 or newer
-- Spotify for the music controls and now-playing information
+- Spotify or Apple Music for the music controls and now-playing information
 - Internet access for artwork and lyrics
 - Apple Intelligence enabled on a supported Mac for general assistant questions
 
-The built-in Spotify and Sleep Mode commands still work when Apple Intelligence is unavailable.
+The built-in music and Sleep Mode commands still work when Apple Intelligence is unavailable.
 
 ## Getting started
 
 1. Open `Nevumi.xcodeproj` in Xcode.
 2. Select the `Nevumi` scheme and `My Mac` destination.
 3. Build and run the app.
-4. Allow Automation access when macOS asks for permission to control Spotify.
+4. Allow Automation access when macOS asks for permission to control Spotify or Music.
 5. Look for the Nevumi ribbon icon in the menu bar.
 
 The app is an accessory application, so it does not appear in the Dock.
@@ -57,7 +57,7 @@ Window control needs **System Settings → Privacy & Security → Accessibility 
 
 ## Quick Assistant
 
-Press `⌥ Space` or choose **Open Quick Assistant** from the menu-bar menu. The assistant appears beneath the notch with its text field focused.
+Press `⌥ Space` or choose **Open Quick Assistant** from the menu-bar menu. The assistant initially appears beneath the notch with its text field focused. Drag its header to move it; it keeps that position when reopened during the same app session.
 
 ### Long screenshots
 
@@ -67,21 +67,21 @@ The first capture asks for macOS Screen Recording access. Nevumi captures only t
 
 Select the scrolling content itself, leaving fixed toolbars and sidebars outside the rectangle. Scroll downward slowly with overlapping sections and keep the window at the same size. Capture stops before 30,000 pixels or after 80 sections. If the panel asks you to slow down, scroll back to the last accepted position shown in the preview and continue in smaller steps.
 
-### Spotify commands
+### Music commands
 
 | Action | Accepted commands |
 | --- | --- |
-| Open Spotify | `open Spotify`, `launch Spotify` |
-| Start or resume music | `play`, `play music`, `resume`, `open Spotify and play music` |
-| Pause music | `pause`, `pause music`, `pause Spotify` |
+| Open a music app | `open Spotify`, `open Apple Music`, `launch Apple Music` |
+| Start or resume music | `play`, `play music`, `resume`, `open Apple Music and play music` |
+| Pause music | `pause`, `pause music`, `pause Spotify`, `pause Apple Music` |
 | Toggle playback | `play or pause`, `toggle music`, `toggle playback` |
 | Next track | `next`, `next song`, `skip`, `skip song`, `skip track` |
 | Previous track | `previous`, `previous song`, `previous track`, `go back` |
 | Show current track | `what song is playing?`, `what is playing?`, `now playing` |
-| Open song search | `play Buwan by Juan Karlos on Spotify`, `put on Here Comes the Sun` |
+| Open song search | `play Buwan by Juan Karlos on Spotify`, `play Here Comes the Sun on Apple Music` |
 
-Spotify commands are processed locally and do not require Apple Intelligence.
-Opening or playing music launches Spotify if it is closed. Play resumes Spotify’s current queue and leaves already playing music running; pause always pauses. If Spotify has no playable queue, choose a song or playlist first. Requests for a song by name open Spotify search results, where you choose a result to play.
+Music commands are processed locally and do not require Apple Intelligence.
+Nevumi follows whichever music app is playing. If both are playing, it keeps controlling the current app. Name an app in your request to target it explicitly; otherwise commands use the active app. Opening or playing launches that app if it is closed. Play resumes its current queue; pause always pauses. If there is no playable queue, choose a song or playlist first. Requests for a song by name open that app’s search results, where you choose a result to play.
 
 ### Sleep Mode commands
 
@@ -91,7 +91,7 @@ Use a command containing `sleep mode`, such as:
 - `Start Sleep Mode`
 - `Open Sleep Mode`
 
-Spotify must have a current track before Sleep Mode can start.
+Spotify or Apple Music must have a current track before Sleep Mode can start.
 
 ### Help commands
 
@@ -104,7 +104,7 @@ When Apple Intelligence is available, Quick Assistant uses Apple's on-device Fou
 
 The assistant automatically receives limited context about:
 
-- The current Spotify track and playback state
+- The current music track, app, and playback state
 - The currently synchronized lyric line
 - Clipboard text when the request contains the word `clipboard`
 
@@ -120,7 +120,7 @@ Clipboard content is limited to the first 8,000 characters and is only read when
 
 ### Conversations
 
-Quick Assistant keeps the current conversation visible as user and assistant message bubbles, so follow-up requests such as `Make that shorter` or `Give me more detail` retain the recent conversational context. Responses include compact context chips when Spotify, the current lyric, the clipboard, or attached files contributed to an answer.
+Quick Assistant keeps the current conversation visible as user and assistant message bubbles, so follow-up requests such as `Make that shorter` or `Give me more detail` retain the recent conversational context. Responses include compact context chips when the music player, the current lyric, the clipboard, or attached files contributed to an answer.
 
 Assistant responses can be copied, saved as plain text, shared, or retried. Choose **New Conversation** from the conversation menu to clear the current thread and its attachments.
 
@@ -136,7 +136,7 @@ Calendar access is requested only when the first entry is saved. Nevumi requests
 
 Open Quick Assistant, then drag one or more supported files anywhere onto its card. The assistant remains visible while Finder is active. You can also click the paperclip button and choose multiple files manually.
 
-You can also drag one or more supported files directly onto the physical MacBook notch, even when Spotify is not playing. The notch expands to show **Drop to convert**; releasing shows a compact convert card where you pick an output format. Converted files are saved next to the originals, or into a folder you choose for multi-page PDFs.
+You can also drag one or more supported files directly onto the physical MacBook notch, even when music is not playing. The notch expands to show **Drop to convert**; releasing shows a compact convert card where you pick an output format. Converted files are saved next to the originals, or into a folder you choose for multi-page PDFs.
 
 Supported inputs:
 
@@ -208,7 +208,7 @@ Remove all attached files with the close button in the attachment toolbar.
 
 ## Notch player
 
-When Spotify opens, Nevumi displays a compact indicator around the physical MacBook notch. Hover over it to expand the full player.
+When Spotify or Apple Music opens, Nevumi displays a compact indicator around the physical MacBook notch. Hover over it to expand the full player.
 
 The expanded player includes:
 
@@ -222,11 +222,11 @@ The expanded player includes:
 - Repeat
 - Current synchronized lyric line
 
-The notch automatically hides when Spotify closes.
+The notch automatically hides when both music apps are closed.
 
 ## Lyrics
 
-Nevumi fetches synchronized lyrics from LRCLIB and follows Spotify's estimated playback position. The current line appears in the expanded notch player and in Sleep Mode.
+Nevumi fetches synchronized lyrics from LRCLIB and follows the active music app’s estimated playback position. The current line appears in the expanded notch player and in Sleep Mode.
 
 Lyrics depend on a matching synchronized entry being available for the current track.
 
@@ -247,7 +247,7 @@ Press any key or click to dismiss Sleep Mode.
 
 ## Menu-bar commands
 
-- Current Spotify track and artist, or `Not Playing`
+- Current music track and artist, or `Not Playing`
 - **Enter Sleep Mode**
 - **Open Quick Assistant**
 - **Capture Long Screenshot…**
@@ -256,7 +256,7 @@ Press any key or click to dismiss Sleep Mode.
 
 ## Privacy and permissions
 
-- Spotify control uses Apple Events and requires macOS Automation permission.
+- Spotify and Apple Music control use Apple Events and require macOS Automation permission for each app.
 - Calendar notes use write-only EventKit access and cannot read existing events.
 - General assistant responses use Apple's on-device model when available.
 - Conversation history is not persisted unless **Keep History on This Mac** is enabled; saved history remains local.
@@ -271,7 +271,7 @@ Press any key or click to dismiss Sleep Mode.
 Nevumi/
 ├── App/          App entry point and service coordinator
 ├── Models/       Audio and lyric data types
-├── Services/     Spotify, lyrics, assistant, hotkey, audio, and window services
+├── Services/     Music players, lyrics, assistant, hotkey, audio, and window services
 ├── ViewModels/   Player and lyric state
 └── Views/        Menu-bar, notch, assistant, and Sleep Mode interfaces
 ```

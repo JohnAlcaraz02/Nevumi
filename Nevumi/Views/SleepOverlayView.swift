@@ -5,7 +5,7 @@ import SwiftUI
 /// artwork with a player widget beneath it on the left, and the synced
 /// lyrics running alongside — all vertically centered together.
 struct SleepOverlayView: View {
-    @ObservedObject var spotify: SpotifyObserver
+    @ObservedObject var music: MusicPlayerObserver
     @ObservedObject var lyrics: LyricsViewModel
     let onDismiss: () -> Void
 
@@ -54,9 +54,9 @@ struct SleepOverlayView: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: onDismiss)
         .onAppear {
-            palette.update(artworkURL: spotify.nowPlaying?.artworkURL)
+            palette.update(artworkURL: music.nowPlaying?.artworkURL)
         }
-        .onChange(of: spotify.nowPlaying?.artworkURL) { _, url in
+        .onChange(of: music.nowPlaying?.artworkURL) { _, url in
             palette.update(artworkURL: url)
         }
     }
@@ -64,7 +64,7 @@ struct SleepOverlayView: View {
     // MARK: - Backdrop
 
     private var artworkBackdrop: some View {
-        AsyncImage(url: spotify.nowPlaying?.artworkURL) { phase in
+        MusicArtwork(url: music.nowPlaying?.artworkURL) { phase in
             if let image = phase.image {
                 image
                     .resizable()
@@ -77,7 +77,7 @@ struct SleepOverlayView: View {
             }
         }
         .ignoresSafeArea()
-        .animation(.easeInOut(duration: 0.8), value: spotify.nowPlaying?.artworkURL)
+        .animation(.easeInOut(duration: 0.8), value: music.nowPlaying?.artworkURL)
     }
 
     // MARK: - Clock
@@ -97,7 +97,7 @@ struct SleepOverlayView: View {
     // MARK: - Artwork + player
 
     private var artwork: some View {
-        AsyncImage(url: spotify.nowPlaying?.artworkURL) { phase in
+        MusicArtwork(url: music.nowPlaying?.artworkURL) { phase in
             if let image = phase.image {
                 image.resizable().scaledToFill()
             } else {
@@ -118,11 +118,11 @@ struct SleepOverlayView: View {
     private var playerWidget: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(spotify.nowPlaying?.title ?? "")
+                Text(music.nowPlaying?.title ?? "")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
-                Text(spotify.nowPlaying?.artist ?? "")
+                Text(music.nowPlaying?.artist ?? "")
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.55))
                     .lineLimit(1)
@@ -137,8 +137,8 @@ struct SleepOverlayView: View {
     }
 
     private var progressBar: some View {
-        let duration = max(spotify.nowPlaying?.duration ?? 0, 1)
-        let progress = min(max(spotify.estimatedPosition() / duration, 0), 1)
+        let duration = max(music.nowPlaying?.duration ?? 0, 1)
+        let progress = min(max(music.estimatedPosition() / duration, 0), 1)
 
         return VStack(spacing: 3) {
             GeometryReader { geo in
@@ -150,7 +150,7 @@ struct SleepOverlayView: View {
             .frame(height: 3)
 
             HStack {
-                Text(timeString(spotify.estimatedPosition()))
+                Text(timeString(music.estimatedPosition()))
                 Spacer()
                 Text(timeString(duration))
             }
@@ -161,31 +161,31 @@ struct SleepOverlayView: View {
 
     private var transportControls: some View {
         HStack {
-            Button(action: spotify.toggleShuffle) {
+            Button(action: music.toggleShuffle) {
                 Image(systemName: "shuffle")
             }
             Spacer()
-            Button(action: spotify.skipToPrevious) {
+            Button(action: music.skipToPrevious) {
                 Image(systemName: "backward.fill")
             }
             Spacer()
-            Button(action: spotify.togglePlayPause) {
-                Image(systemName: (spotify.nowPlaying?.isPlaying ?? false) ? "pause.fill" : "play.fill")
+            Button(action: music.togglePlayPause) {
+                Image(systemName: (music.nowPlaying?.isPlaying ?? false) ? "pause.fill" : "play.fill")
                     .font(.system(size: 20))
             }
             Spacer()
-            Button(action: spotify.skipToNext) {
+            Button(action: music.skipToNext) {
                 Image(systemName: "forward.fill")
             }
             Spacer()
-            Button(action: spotify.toggleRepeat) {
+            Button(action: music.toggleRepeat) {
                 Image(systemName: "repeat")
             }
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white)
         .font(.system(size: 15, weight: .semibold))
-        .disabled(spotify.nowPlaying == nil)
+        .disabled(music.nowPlaying == nil)
         .padding(.top, 4)
     }
 

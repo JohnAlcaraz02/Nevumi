@@ -64,18 +64,23 @@ struct QuickAssistantView: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image("NevumiMark")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 18, height: 14)
-                .foregroundStyle(Color(red: 0.72, green: 0.65, blue: 1))
-            Text("Quick Assistant")
-                .font(.system(size: 14, weight: .semibold))
-            Spacer()
-            Text("⌥ Space")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.secondary)
-                .padding(.trailing, 6)
+            HStack(spacing: 10) {
+                Image("NevumiMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 14)
+                    .foregroundStyle(Color(red: 0.72, green: 0.65, blue: 1))
+                Text("Quick Assistant")
+                    .font(.system(size: 14, weight: .semibold))
+                Spacer()
+                Text("⌥ Space")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .padding(.trailing, 6)
+            }
+            .frame(maxHeight: .infinity)
+            .overlay { AssistantWindowDragArea() }
+            .help("Drag to move Quick Assistant")
             Button {
                 viewModel.showCalendarComposer()
             } label: {
@@ -779,5 +784,25 @@ struct QuickAssistantView: View {
         if viewModel.isRemovingBackground { return "Removing the background on this Mac…" }
         if viewModel.isConverting { return "Converting the file…" }
         return "Thinking on this Mac…"
+    }
+}
+
+/// Uses AppKit's native window dragging without intercepting header buttons,
+/// conversation selection, or file drops elsewhere in the assistant.
+private struct AssistantWindowDragArea: NSViewRepresentable {
+    func makeNSView(context: Context) -> DragView { DragView() }
+
+    func updateNSView(_ nsView: DragView, context: Context) {}
+
+    final class DragView: NSView {
+        override var mouseDownCanMoveWindow: Bool { false }
+
+        override func mouseDown(with event: NSEvent) {
+            window?.performDrag(with: event)
+        }
+
+        override func resetCursorRects() {
+            addCursorRect(bounds, cursor: .openHand)
+        }
     }
 }

@@ -40,29 +40,29 @@ final class NotchController {
     private var hoverCancellable: AnyCancellable?
     private var isShown = false
     private var isShowingFileDrop = false
-    private var isSpotifyRunning = false
-    private var spotify: SpotifyObserver!
+    private var isMusicRunning = false
+    private var music: MusicPlayerObserver!
 
     private init() {}
 
-    /// Gives the pill a `SpotifyObserver` to read live playback position from
+    /// Gives the pill a `MusicPlayerObserver` to read live playback position from
     /// and to wire its transport buttons to. Call once, before the first
     /// `update`.
-    func configure(spotify: SpotifyObserver) {
-        self.spotify = spotify
+    func configure(music: MusicPlayerObserver) {
+        self.music = music
     }
 
-    func update(title: String, artist: String, isPlaying: Bool, isSpotifyRunning: Bool, artworkURL: URL?, duration: TimeInterval, currentLyric: String?) {
+    func update(title: String, artist: String, isPlaying: Bool, isMusicRunning: Bool, artworkURL: URL?, duration: TimeInterval, currentLyric: String?) {
         state.title = title
         state.artist = artist
         state.isPlaying = isPlaying
         state.artworkURL = artworkURL
         state.duration = duration
         state.currentLyric = currentLyric
-        self.isSpotifyRunning = isSpotifyRunning
+        self.isMusicRunning = isMusicRunning
 
         guard !isShowingFileDrop else { return }
-        if isSpotifyRunning {
+        if isMusicRunning {
             showIfNeeded()
         } else {
             hide()
@@ -88,7 +88,7 @@ final class NotchController {
             }
         } else {
             notch?.windowController?.window?.ignoresMouseEvents = false
-            if isSpotifyRunning, let notch {
+            if isMusicRunning, let notch {
                 Task { await notch.compact() }
             } else {
                 hide()
@@ -107,7 +107,7 @@ final class NotchController {
         isShown = true
 
         let notch = DynamicNotch(hoverBehavior: .all) {
-            AnyView(NotchExpandedView(state: self.state, spotify: self.spotify))
+            AnyView(NotchExpandedView(state: self.state, music: self.music))
         } compactLeading: {
             AnyView(NotchCompactLeadingView(state: self.state))
         } compactTrailing: {
@@ -182,7 +182,7 @@ private struct NotchCompactTrailingView: View {
 /// line running underneath.
 private struct NotchExpandedView: View {
     @ObservedObject var state: NotchPlaybackState
-    @ObservedObject var spotify: SpotifyObserver
+    @ObservedObject var music: MusicPlayerObserver
 
     var body: some View {
         Group {
@@ -235,7 +235,7 @@ private struct NotchExpandedView: View {
     }
 
     private var artworkThumbnail: some View {
-        AsyncImage(url: state.artworkURL) { phase in
+        MusicArtwork(url: state.artworkURL) { phase in
             if let image = phase.image {
                 image.resizable().scaledToFill()
             } else {
@@ -255,7 +255,7 @@ private struct NotchExpandedView: View {
     private var progressSection: some View {
         TimelineView(.periodic(from: .now, by: 0.5)) { _ in
             let duration = max(state.duration, 1)
-            let position = min(spotify.estimatedPosition(), duration)
+            let position = min(music.estimatedPosition(), duration)
             let progress = position / duration
 
             VStack(spacing: 4) {
@@ -280,24 +280,24 @@ private struct NotchExpandedView: View {
 
     private var transportControls: some View {
         HStack {
-            Button(action: spotify.toggleShuffle) {
+            Button(action: music.toggleShuffle) {
                 Image(systemName: "shuffle")
             }
             Spacer()
-            Button(action: spotify.skipToPrevious) {
+            Button(action: music.skipToPrevious) {
                 Image(systemName: "backward.fill")
             }
             Spacer()
-            Button(action: spotify.togglePlayPause) {
+            Button(action: music.togglePlayPause) {
                 Image(systemName: state.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 20))
             }
             Spacer()
-            Button(action: spotify.skipToNext) {
+            Button(action: music.skipToNext) {
                 Image(systemName: "forward.fill")
             }
             Spacer()
-            Button(action: spotify.toggleRepeat) {
+            Button(action: music.toggleRepeat) {
                 Image(systemName: "repeat")
             }
         }

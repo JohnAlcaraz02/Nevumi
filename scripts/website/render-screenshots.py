@@ -22,7 +22,7 @@ for path in source.rglob('*.swift'):
     # Expose views and fixture state only in the disposable rendering target.
     text = re.sub(r'^private (struct|enum|final class|class) ', r'\1 ', text, flags=re.M)
     text = text.replace('@Published private(set)', '@Published')
-    if path.name == 'SpotifyObserver.swift':
+    if path.name == 'MusicPlayerObserver.swift':
         text = text.replace('private var lastPosition:', 'var lastPosition:').replace('private var lastPositionDate', 'var lastPositionDate')
     path.write_text(text)
 shutil.copy(root / 'scripts' / 'website' / 'ScreenshotMain.swift', source / 'ScreenshotMain.swift')

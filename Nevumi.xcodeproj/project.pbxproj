@@ -20,7 +20,7 @@
 		5297C28903716934A9B43829 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8105EB3B27DABECFEB632CEF /* Assets.xcassets */; };
 		547311EAEED927CFD260F1C0 /* GlobalHotKeyController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00AFE19EF926B9EFB123996A /* GlobalHotKeyController.swift */; };
 		5AA7F103E43B3CAB4BF57744 /* LongScreenshotController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A574AB8A8FF6C9A0590D555 /* LongScreenshotController.swift */; };
-		5AB549A14532D1CB9EF9F410 /* SpotifyObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B7DD79216D07DCE1C03E1F5 /* SpotifyObserver.swift */; };
+		5AB549A14532D1CB9EF9F410 /* MusicPlayerObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B7DD79216D07DCE1C03E1F5 /* MusicPlayerObserver.swift */; };
 		6320ABBDA40DEB040BB05888 /* AmbientBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 299B8187D1B35BAC3E51F923 /* AmbientBackground.swift */; };
 		6615DB1B84D1E2E1392AF483 /* AirDropSharingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56451F45A6396CAC64E0EF21 /* AirDropSharingService.swift */; };
 		67FFEB8982F3B2C30C266A0B /* QuickAssistantFileConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A45A784D19CC2BA76B3337 /* QuickAssistantFileConverter.swift */; };
@@ -70,7 +70,7 @@
 		770E36DB192C699B38B105D8 /* NotchConvertCardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchConvertCardController.swift; sourceTree = "<group>"; };
 		7B5C2151A0952D95441BBA5F /* Nevumi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nevumi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8105EB3B27DABECFEB632CEF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		8B7DD79216D07DCE1C03E1F5 /* SpotifyObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyObserver.swift; sourceTree = "<group>"; };
+		8B7DD79216D07DCE1C03E1F5 /* MusicPlayerObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayerObserver.swift; sourceTree = "<group>"; };
 		8E5FB167BCBB224626EBA752 /* LyricsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LyricsViewModel.swift; sourceTree = "<group>"; };
 		91ED35B12E9797C5B1F0D76D /* QuickAssistantView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickAssistantView.swift; sourceTree = "<group>"; };
 		9631BB6CFD78EAD9FB5B76F6 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
@@ -163,7 +163,7 @@
 				B2D4090EA5BEA911B13FAC64 /* QuickAssistantService.swift */,
 				F2BD2E03310683B83B921750 /* QuickAssistantWindowController.swift */,
 				D674C48605A3C3593171DD63 /* SleepOverlayController.swift */,
-				8B7DD79216D07DCE1C03E1F5 /* SpotifyObserver.swift */,
+				8B7DD79216D07DCE1C03E1F5 /* MusicPlayerObserver.swift */,
 				D2C655496EF920E0027D051E /* StorageService.swift */,
 				1569258B87FCFD7698FAEEF9 /* WindowManagementController.swift */,
 			);
@@ -322,7 +322,7 @@
 				22C93AEA70E36BF511FCA520 /* QuickAssistantWindowController.swift in Sources */,
 				11A4DC67FA22B9F6272140BE /* SleepOverlayController.swift in Sources */,
 				9C3DFAFD4D0F9E22DD8A1650 /* SleepOverlayView.swift in Sources */,
-				5AB549A14532D1CB9EF9F410 /* SpotifyObserver.swift in Sources */,
+				5AB549A14532D1CB9EF9F410 /* MusicPlayerObserver.swift in Sources */,
 				8B62160A12E27DF2BB1A642A /* StorageService.swift in Sources */,
 				DCF9281766C6BC87727DFE71 /* WindowManagementController.swift in Sources */,
 				83DC37B54141E0715B05AFF8 /* WindowShortcutsSettingsView.swift in Sources */,

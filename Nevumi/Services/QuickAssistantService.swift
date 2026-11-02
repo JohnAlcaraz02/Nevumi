@@ -101,7 +101,7 @@ final class QuickAssistantViewModel: ObservableObject {
     @Published private(set) var convertedFiles: [URL] = []
     @Published private(set) var automaticOutputAction: AssistantAutomaticOutputAction = .none
 
-    private let spotify: SpotifyObserver
+    private let music: MusicPlayerObserver
     private let lyrics: LyricsViewModel
     private let calendarService = QuickAssistantCalendarService()
     private var requestTask: Task<Void, Never>?
@@ -117,8 +117,8 @@ final class QuickAssistantViewModel: ObservableObject {
     Music and Sleep Mode actions are handled separately by the app.
     """
 
-    init(spotify: SpotifyObserver, lyrics: LyricsViewModel) {
-        self.spotify = spotify
+    init(music: MusicPlayerObserver, lyrics: LyricsViewModel) {
+        self.music = music
         self.lyrics = lyrics
         let defaults = UserDefaults.standard
         if let stored = defaults.string(forKey: "assistantAutomaticOutputAction"),
@@ -407,7 +407,7 @@ final class QuickAssistantViewModel: ObservableObject {
         appendMessage(role: .user, text: request)
 
         if handleConversionCommand(request) { return }
-        if handleSpotifyCommand(request) { return }
+        if handleMusicCommand(request) { return }
 
         if let localResponse = performLocalCommand(request) {
             if !isBusy {
@@ -417,7 +417,7 @@ final class QuickAssistantViewModel: ObservableObject {
         }
 
         guard SystemLanguageModel.default.isAvailable else {
-            presentResponse("Apple Intelligence is unavailable on this Mac. You can still say “open Spotify,” “play music,” “pause,” “next song,” “what song is playing,” or “enter sleep mode.”")
+            presentResponse("Apple Intelligence is unavailable on this Mac. You can still say “open Apple Music,” “play music,” “pause,” “next song,” “what song is playing,” or “enter sleep mode.”")
             return
         }
 
@@ -909,27 +909,19 @@ final class QuickAssistantViewModel: ObservableObject {
             return response
         }
 
-        if ["next", "next song", "skip", "skip song", "skip track"].contains(command) {
-            spotify.skipToNext()
-            return "Skipping to the next Spotify track."
-        }
-        if ["previous", "previous song", "previous track", "go back"].contains(command) {
-            spotify.skipToPrevious()
-            return "Going back to the previous Spotify track."
-        }
         if command.contains("sleep mode") {
-            guard spotify.nowPlaying != nil else {
-                return "Play something in Spotify before entering Sleep Mode."
+            guard music.nowPlaying != nil else {
+                return "Play something in Spotify or Apple Music before entering Sleep Mode."
             }
-            SleepOverlayController.shared.show(spotify: spotify, lyrics: lyrics)
+            SleepOverlayController.shared.show(music: music, lyrics: lyrics)
             return "Sleep Mode started. Click or press a key to leave it."
         }
         if command.contains("what song") || command.contains("what is playing") || command == "now playing" {
-            guard let track = spotify.nowPlaying else { return "Spotify isn’t playing anything right now." }
+            guard let track = music.nowPlaying else { return "Neither Spotify nor Apple Music has a current track." }
             return "“\(track.title)” by \(track.artist) is currently \(track.isPlaying ? "playing" : "paused")."
         }
         if command == "help" || command == "what can you do" {
-            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, remove backgrounds, use another photo, or generate a described background with Image Playground. I can also summarize clipboard text, open Spotify, play or pause music, search for songs, check the current song, and enter Sleep Mode. Try “open Spotify and play music.”"
+            return "Ask a question, add calendar notes, or drop files to analyze and convert. For images I can enhance photos, erase objects, remove backgrounds, use another photo, or generate a described background with Image Playground. I can also summarize clipboard text, open Spotify or Apple Music, play or pause music, search for songs, check the current song, and enter Sleep Mode. Try “open Apple Music and play music.”"
         }
         return nil
     }
@@ -964,10 +956,11 @@ final class QuickAssistantViewModel: ObservableObject {
         return nil
     }
 
-    private func handleSpotifyCommand(_ request: String) -> Bool {
-        let command = AssistantSpotifyCommand(request: request)
-        let search = command == nil ? requestedSpotifySearch(in: request) : nil
+    private func handleMusicCommand(_ request: String) -> Bool {
+        let command = AssistantMusicCommand(request: request)
+        let search = command == nil ? requestedMusicSearch(in: request) : nil
         guard command != nil || search != nil else { return false }
+        let player = MusicPlayer.requested(in: request) ?? music.activePlayer
         isWorking = true
         requestTask = Task { [weak self] in
             guard let self else { return }
@@ -975,10 +968,10 @@ final class QuickAssistantViewModel: ObservableObject {
             do {
                 let result: String
                 if let command {
-                    result = try await spotify.perform(command)
+                    result = try await music.perform(command, player: player)
                 } else if let search {
-                    try await spotify.openSearch(search)
-                    result = "Opened Spotify results for “\(search)”. Choose a song to play."
+                    try await music.openSearch(search, player: player)
+                    result = "Opened \(player.displayName) results for “\(search)”. Choose a song to play."
                 } else {
                     return
                 }
@@ -994,7 +987,7 @@ final class QuickAssistantViewModel: ObservableObject {
         return true
     }
 
-    private func requestedSpotifySearch(in request: String) -> String? {
+    private func requestedMusicSearch(in request: String) -> String? {
         var value = request.trimmingCharacters(in: .whitespacesAndNewlines)
         let prefixPatterns = [
             #"(?i)^\s*(?:can|could|would)\s+you\s+(?:please\s+)?(?:play|put\s+on|listen\s+to)\s+"#,
@@ -1010,7 +1003,7 @@ final class QuickAssistantViewModel: ObservableObject {
         value.removeSubrange(prefixRange)
 
         value = value.replacingOccurrences(
-            of: #"(?i)\s+(?:on|in|with)\s+spotify\b"#,
+            of: #"(?i)\s+(?:on|in|with)\s+(?:spotify|apple\s+music)\b"#,
             with: " ",
             options: .regularExpression
         )
@@ -1029,7 +1022,7 @@ final class QuickAssistantViewModel: ObservableObject {
         )
         let normalized = value.lowercased()
         guard !value.isEmpty,
-              !["spotify", "music", "something", "a song"].contains(normalized)
+              !["spotify", "apple music", "music", "something", "a song"].contains(normalized)
         else { return nil }
         return value
     }
@@ -1415,9 +1408,9 @@ final class QuickAssistantViewModel: ObservableObject {
     private func contextualRequest(for request: String) -> ContextualRequest {
         var context: [String] = []
         var chips: [QuickAssistantContextChip] = []
-        if let track = spotify.nowPlaying {
-            context.append("Current Spotify track: \(track.title) by \(track.artist); playback is \(track.isPlaying ? "playing" : "paused").")
-            chips.append(.init(label: "Spotify", systemImage: "music.note"))
+        if let track = music.nowPlaying {
+            context.append("Current \(music.activePlayer.displayName) track: \(track.title) by \(track.artist); playback is \(track.isPlaying ? "playing" : "paused").")
+            chips.append(.init(label: music.activePlayer.displayName, systemImage: "music.note"))
         }
         if let lyric = lyrics.currentLine?.text, !lyric.isEmpty {
             context.append("Current lyric: \(lyric)")

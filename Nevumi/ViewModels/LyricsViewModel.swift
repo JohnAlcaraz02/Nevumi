@@ -12,7 +12,7 @@ final class LyricsViewModel: ObservableObject {
     private let service = LyricsService.shared
     private weak var channel: SoundChannel?
     private var pollTask: Task<Void, Never>?
-    private var lastSpotifyKey: String?
+    private var lastMusicKey: String?
 
     /// Starts polling `channel`'s playback position so `currentLine` stays
     /// in sync. Call once, when the channel is created.
@@ -27,13 +27,13 @@ final class LyricsViewModel: ObservableObject {
         }
     }
 
-    /// Starts polling `observer`'s estimated Spotify playback position so
+    /// Starts polling `observer`'s estimated Music playback position so
     /// `currentLine` stays in sync. Call once, when the view appears.
-    func attachToSpotify(_ observer: SpotifyObserver) {
+    func attachToMusic(_ observer: MusicPlayerObserver) {
         pollTask?.cancel()
         pollTask = Task { [weak self, weak observer] in
             while !Task.isCancelled {
-                if let observer { self?.tickSpotify(observer) }
+                if let observer { self?.tickMusic(observer) }
                 try? await Task.sleep(for: .milliseconds(250))
             }
         }
@@ -55,18 +55,18 @@ final class LyricsViewModel: ObservableObject {
         }
     }
 
-    /// Fetches lyrics when the Spotify-reported track changes; ignores
+    /// Fetches lyrics when the Music-reported track changes; ignores
     /// position-only updates for the same track.
-    func syncWithSpotify(_ nowPlaying: SpotifyObserver.NowPlaying?) {
+    func syncWithMusic(_ nowPlaying: MusicPlayerObserver.NowPlaying?) {
         guard let nowPlaying else {
-            lastSpotifyKey = nil
+            lastMusicKey = nil
             lines = []
             currentLine = nil
             return
         }
         let key = "\(nowPlaying.title)|\(nowPlaying.artist)"
-        guard key != lastSpotifyKey else { return }
-        lastSpotifyKey = key
+        guard key != lastMusicKey else { return }
+        lastMusicKey = key
         fetchLyrics(title: nowPlaying.title, artist: nowPlaying.artist, durationHint: nowPlaying.duration)
     }
 
@@ -76,7 +76,7 @@ final class LyricsViewModel: ObservableObject {
         currentLine = lines.last { $0.time <= time }
     }
 
-    private func tickSpotify(_ observer: SpotifyObserver) {
+    private func tickMusic(_ observer: MusicPlayerObserver) {
         guard !lines.isEmpty else { return }
         let time = observer.estimatedPosition()
         currentLine = lines.last { $0.time <= time }
